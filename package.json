@@ -10,7 +10,6 @@
     "dev": "npx serve . -l 3000"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0",
-    "lightningcss-cli": "^1.28.0"
+    "esbuild": "^0.24.0"
   }
 }

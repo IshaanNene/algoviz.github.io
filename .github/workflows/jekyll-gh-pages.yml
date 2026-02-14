@@ -53,13 +53,11 @@ jobs:
           cache: "npm"
 
       - name: Install build tools
-        run: npm ci --ignore-scripts 2>/dev/null || npm install --save-dev esbuild lightningcss-cli
+        run: npm ci
 
       - name: Minify CSS
         run: |
-          npx lightningcss-cli --minify --bundle \
-            --targets '>= 0.25%' \
-            css/style.css -o css/style.min.css
+          npx esbuild css/style.css --minify --outfile=css/style.min.css
           echo "::notice::CSS minified: $(wc -c < css/style.css) → $(wc -c < css/style.min.css) bytes"
 
       - name: Bundle & Minify JS
