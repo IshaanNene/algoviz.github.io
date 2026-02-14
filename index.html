@@ -4,15 +4,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AlgoViz — Algorithm Visualizer</title>
+
+  <!-- ─── SEO & Meta ──────────────────────────────────────── -->
+  <title>AlgoViz — Interactive Algorithm Visualizer</title>
   <meta name="description"
     content="Interactive algorithm visualization platform. Explore sorting, graph, and data structure algorithms with step-by-step animation and playback controls.">
+  <meta name="keywords"
+    content="algorithm visualizer, sorting algorithms, graph algorithms, data structures, BFS, DFS, binary tree, heap, linked list">
+  <meta name="author" content="Ishaan Nene">
+  <link rel="canonical" href="https://ishaannene.github.io/algoviz.github.io/">
+
+  <!-- ─── Open Graph / Social ─────────────────────────────── -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AlgoViz — Interactive Algorithm Visualizer">
+  <meta property="og:description"
+    content="Explore sorting, graph, and data structure algorithms with step-by-step animation and playback controls.">
+  <meta property="og:url" content="https://ishaannene.github.io/algoviz.github.io/">
+  <meta property="og:site_name" content="AlgoViz">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AlgoViz — Interactive Algorithm Visualizer">
+  <meta name="twitter:description"
+    content="Explore sorting, graph, and data structure algorithms with step-by-step animation and playback controls.">
+
+  <!-- ─── PWA & Theme ─────────────────────────────────────── -->
+  <meta name="theme-color" content="#1A1A1A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AlgoViz">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- ─── Performance: Resource Hints ─────────────────────── -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
+  <!-- ─── Fonts ───────────────────────────────────────────── -->
   <link
     href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
+
+  <!-- ─── Styles ──────────────────────────────────────────── -->
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- ─── Structured Data (JSON-LD) ───────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "AlgoViz",
+    "description": "Interactive algorithm visualization platform for sorting, graph, and data structure algorithms.",
+    "url": "https://ishaannene.github.io/algoviz.github.io/",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires a modern browser with JavaScript enabled",
+    "author": {
+      "@type": "Person",
+      "name": "Ishaan Nene"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
 </head>
 
 <body>
@@ -23,17 +78,17 @@
         <h1 class="logo">Algo<span class="logo-accent">Viz</span></h1>
         <p class="logo-sub">algorithm visualizer</p>
       </div>
-      <nav id="main-nav">
+      <nav id="main-nav" aria-label="Main navigation">
         <a href="#sorting" class="nav-item active" data-route="sorting">
-          <span class="nav-icon">⊞</span>
+          <span class="nav-icon" aria-hidden="true">⊞</span>
           <span class="nav-label">Sorting</span>
         </a>
         <a href="#graphs" class="nav-item" data-route="graphs">
-          <span class="nav-icon">◉</span>
+          <span class="nav-icon" aria-hidden="true">◉</span>
           <span class="nav-label">Graphs</span>
         </a>
         <a href="#data-structures" class="nav-item" data-route="data-structures">
-          <span class="nav-icon">⧫</span>
+          <span class="nav-icon" aria-hidden="true">⧫</span>
           <span class="nav-label">Data Structures</span>
         </a>
       </nav>
@@ -53,7 +108,16 @@
     </main>
   </div>
 
-  <!-- Scripts -->
+  <!-- ─── No-JS Fallback ──────────────────────────────────── -->
+  <noscript>
+    <div
+      style="padding:40px;text-align:center;font-family:monospace;font-size:1.2rem;background:#FFE66D;border:3px solid #1A1A1A;margin:20px;">
+      <strong>AlgoViz requires JavaScript to run.</strong><br>
+      Please enable JavaScript in your browser to use the algorithm visualizer.
+    </div>
+  </noscript>
+
+  <!-- ─── Scripts ─────────────────────────────────────────── -->
   <script src="js/engine.js"></script>
   <script src="js/sorting/algorithms.js"></script>
   <script src="js/sorting/renderer.js"></script>
@@ -69,6 +133,17 @@
   <script src="js/ds/heap.js"></script>
   <script src="js/ds/view.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- ─── Service Worker Registration ─────────────────────── -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('[SW] Registered:', reg.scope))
+          .catch(err => console.warn('[SW] Registration failed:', err));
+      });
+    }
+  </script>
 </body>
 
 </html>
