@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlgoViz — Algorithm Visualizer</title>
+  <meta name="description"
+    content="Interactive algorithm visualization platform. Explore sorting, graph, and data structure algorithms with step-by-step animation and playback controls.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">Algo<span class="logo-accent">Viz</span></h1>
+        <p class="logo-sub">algorithm visualizer</p>
+      </div>
+      <nav id="main-nav">
+        <a href="#sorting" class="nav-item active" data-route="sorting">
+          <span class="nav-icon">⊞</span>
+          <span class="nav-label">Sorting</span>
+        </a>
+        <a href="#graphs" class="nav-item" data-route="graphs">
+          <span class="nav-icon">◉</span>
+          <span class="nav-label">Graphs</span>
+        </a>
+        <a href="#data-structures" class="nav-item" data-route="data-structures">
+          <span class="nav-icon">⧫</span>
+          <span class="nav-label">Data Structures</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="brutalist-badge">
+          <span>Ishaan Nene©</span>
+        </div>
+        <div class="brutalist-badge accent">
+          <span>Made with Love</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content">
+      <div id="view-container"></div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/engine.js"></script>
+  <script src="js/sorting/algorithms.js"></script>
+  <script src="js/sorting/renderer.js"></script>
+  <script src="js/sorting/view.js"></script>
+  <script src="js/graph/graph.js"></script>
+  <script src="js/graph/editor.js"></script>
+  <script src="js/graph/renderer.js"></script>
+  <script src="js/graph/algorithms.js"></script>
+  <script src="js/graph/view.js"></script>
+  <script src="js/ds/linked-list.js"></script>
+  <script src="js/ds/stack-queue.js"></script>
+  <script src="js/ds/binary-tree.js"></script>
+  <script src="js/ds/heap.js"></script>
+  <script src="js/ds/view.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
