@@ -35,9 +35,7 @@ jobs:
           node-version: "20"
 
       - name: Validate HTML
-        uses: nicokoenig/html-validate-action@v1
-        with:
-          files: "*.html"
+        run: npx -y html-validate@latest *.html
 
   # ─── Build ─────────────────────────────────────────────────────
   build:
