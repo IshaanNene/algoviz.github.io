@@ -65,6 +65,7 @@ const ComparisonView = {
             document.getElementById('cmp-size-val').querySelector('.stat-value').textContent = self.arraySize;
         });
         sizeSlider.addEventListener('change', function () {
+            self._stopAll();
             self._generateArray(); self._buildRacerGrid();
         });
 
@@ -105,18 +106,27 @@ const ComparisonView = {
     _buildRacerGrid() {
         const grid = document.getElementById('racer-grid');
         if (!grid) return;
+        // Kill old engines and their callbacks
+        this.engines.forEach(e => { e.stop(); e.onStep = null; e.onComplete = null; e.onReset = null; });
         grid.innerHTML = '';
         this.engines = [];
         this.racers = [];
         this.results = [];
 
         const count = this.selectedAlgos.length;
-        grid.style.gridTemplateColumns = count <= 2 ? '1fr 1fr' : 'repeat(2, 1fr)';
+        const cols = count <= 2 ? 2 : count <= 4 ? 2 : 3;
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+        // Dynamic card height based on rows and available space
+        const rows = Math.ceil(count / cols);
+        const gridHeight = grid.clientHeight || 500;
+        const cardH = Math.max(160, Math.floor(gridHeight / rows));
 
         this.selectedAlgos.forEach((algo, i) => {
             const info = SortingAlgorithms.info[algo];
             const card = document.createElement('div');
             card.className = 'racer-card';
+            card.style.height = cardH + 'px';
             card.innerHTML = `
         <div class="racer-header">
           <span class="racer-name">${info.name}</span>

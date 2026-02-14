@@ -706,7 +706,7 @@ body {
   background: var(--bg);
 }
 
-.racer-checkbox input:checked + span {
+.racer-checkbox input:checked+span {
   color: var(--purple);
 }
 
@@ -723,6 +723,7 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0;
+  overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
@@ -732,6 +733,7 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bg-card);
+  overflow: hidden;
 }
 
 .racer-header {
@@ -771,7 +773,7 @@ body {
 
 .racer-canvas-wrap {
   flex: 1;
-  min-height: 150px;
+  min-height: 100px;
   position: relative;
 }
 
