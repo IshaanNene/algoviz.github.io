@@ -18,6 +18,9 @@ const DSView = {
           <button class="tab-item" data-ds="queue">Queue</button>
           <button class="tab-item" data-ds="binary-tree">Binary Tree</button>
           <button class="tab-item" data-ds="heap">Heap</button>
+          <button class="tab-item" data-ds="hash-table">Hash Table</button>
+          <button class="tab-item" data-ds="trie">Trie</button>
+          <button class="tab-item" data-ds="strings">Strings</button>
         </div>
         <div class="operation-panel" id="ds-operations"></div>
         <div class="controls-bar">
@@ -104,6 +107,40 @@ const DSView = {
           <button class="brutal-btn green small" data-op="sample">Sample</button>
           <button class="brutal-btn small" data-op="clear">Clear</button>`;
                 break;
+            case 'hash-table':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="text" id="ds-key" class="brutal-input" placeholder="Key" value="apple" style="width:100px"></div>
+          <div class="op-input-group"><input type="text" id="ds-ht-value" class="brutal-input" placeholder="Value" value="42" style="width:80px"></div>
+          <button class="brutal-btn primary small" data-op="ht-insert">Insert</button>
+          <button class="brutal-btn purple small" data-op="ht-get">Get</button>
+          <button class="brutal-btn danger small" data-op="ht-delete">Delete</button>
+          <div class="toolbar-separator"></div>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'trie':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="text" id="ds-word" class="brutal-input" placeholder="Word" value="cat" style="width:120px"></div>
+          <button class="brutal-btn primary small" data-op="trie-insert">Insert</button>
+          <button class="brutal-btn purple small" data-op="trie-search">Search</button>
+          <button class="brutal-btn accent small" data-op="trie-prefix">Prefix</button>
+          <button class="brutal-btn danger small" data-op="trie-delete">Delete</button>
+          <div class="toolbar-separator"></div>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'strings':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="text" id="ds-text" class="brutal-input" placeholder="Text" value="ABABDABACDABABCABAB" style="width:200px"></div>
+          <div class="op-input-group"><input type="text" id="ds-pattern" class="brutal-input" placeholder="Pattern" value="ABABCABAB" style="width:130px"></div>
+          <select id="string-algo" class="brutal-select">
+            <option value="naive" selected>Naive</option>
+            <option value="kmp">KMP</option>
+            <option value="rabin-karp">Rabin-Karp</option>
+          </select>
+          <button class="brutal-btn primary small" data-op="string-run">Run</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
         }
     },
 
@@ -115,6 +152,9 @@ const DSView = {
             case 'queue': StackQueueViz.init(canvas, 'queue'); break;
             case 'binary-tree': BinaryTreeViz.init(canvas); break;
             case 'heap': HeapViz.init(canvas); break;
+            case 'hash-table': HashTableViz.init(canvas); break;
+            case 'trie': TrieViz.init(canvas); break;
+            case 'strings': StringViz.init(canvas); break;
         }
     },
 
@@ -124,6 +164,9 @@ const DSView = {
             case 'stack': case 'queue': return StackQueueViz;
             case 'binary-tree': return BinaryTreeViz;
             case 'heap': return HeapViz;
+            case 'hash-table': return HashTableViz;
+            case 'trie': return TrieViz;
+            case 'strings': return StringViz;
         }
     },
 
@@ -181,6 +224,43 @@ const DSView = {
                     case 'sample': HeapViz.buildSample(); return;
                     case 'clear': HeapViz.heapArray = []; HeapViz.draw(); return;
                 } break;
+            case 'hash-table': {
+                const ki = document.getElementById('ds-key');
+                const htKey = ki ? ki.value || '' : '';
+                const hvi = document.getElementById('ds-ht-value');
+                const htVal = hvi ? hvi.value || '' : '';
+                switch (op) {
+                    case 'ht-insert': steps = HashTableViz.insert(htKey, htVal); break;
+                    case 'ht-get': steps = HashTableViz.get(htKey); break;
+                    case 'ht-delete': steps = HashTableViz.remove(htKey); break;
+                    case 'sample': HashTableViz.buildSample(); return;
+                    case 'clear': HashTableViz.clear(); return;
+                } break;
+            }
+            case 'trie': {
+                const wi = document.getElementById('ds-word');
+                const word = wi ? wi.value || '' : '';
+                switch (op) {
+                    case 'trie-insert': steps = TrieViz.insert(word); break;
+                    case 'trie-search': steps = TrieViz.search(word); break;
+                    case 'trie-prefix': steps = TrieViz.startsWith(word); break;
+                    case 'trie-delete': steps = TrieViz.deleteWord(word); break;
+                    case 'sample': TrieViz.buildSample(); return;
+                    case 'clear': TrieViz.clear(); return;
+                } break;
+            }
+            case 'strings': {
+                const ti = document.getElementById('ds-text');
+                const pi = document.getElementById('ds-pattern');
+                const ai = document.getElementById('string-algo');
+                const text = ti ? ti.value || '' : '';
+                const pattern = pi ? pi.value || '' : '';
+                const algo = ai ? ai.value : 'naive';
+                switch (op) {
+                    case 'string-run': steps = StringViz.run(algo, text, pattern); break;
+                    case 'clear': StringViz.clear(); return;
+                } break;
+            }
         }
         if (steps.length > 0) {
             this.engine.loadSteps(steps); document.getElementById('ds-timeline').max = steps.length - 1; document.getElementById('ds-timeline').value = 0;

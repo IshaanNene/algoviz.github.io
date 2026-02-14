@@ -664,3 +664,174 @@ body {
     transform: translateY(0);
   }
 }
+
+/* --- Searching View --- */
+.searching-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.searching-view .canvas-container {
+  flex: 1;
+  min-height: 300px;
+}
+
+/* --- Comparison View --- */
+.comparison-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.algo-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.racer-checkbox {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+}
+
+.racer-checkbox input:checked + span {
+  color: var(--purple);
+}
+
+.speed-bar {
+  padding: var(--space-sm) var(--space-xl);
+  border-bottom: 2px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.racer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.racer-card {
+  border: var(--border-width) solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+}
+
+.racer-header {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 2px solid var(--border);
+  background: var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.racer-name {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.racer-badge {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+}
+
+.racer-stats {
+  padding: var(--space-xs) var(--space-md);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  background: var(--bg);
+}
+
+.racer-canvas-wrap {
+  flex: 1;
+  min-height: 150px;
+  position: relative;
+}
+
+.racer-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.racer-status {
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-top: 2px solid var(--border);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* --- Results Card --- */
+.results-card {
+  margin: 0;
+  padding: var(--space-lg) var(--space-xl);
+  border-top: var(--border-width) solid var(--border);
+  background: var(--bg-card);
+}
+
+.results-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.results-table th,
+.results-table td {
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--border);
+  text-align: center;
+}
+
+.results-table th {
+  background: var(--border);
+  color: #fff;
+}
+
+.results-table .winner-row {
+  background: var(--green);
+  font-weight: 700;
+}

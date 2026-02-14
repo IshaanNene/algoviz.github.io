@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
         'data-structures': {
             mount: (c) => DSView.mount(c),
             unmount: () => DSView.unmount()
+        },
+        'searching': {
+            mount: (c) => SearchView.mount(c),
+            unmount: () => SearchView.unmount()
+        },
+        'compare': {
+            mount: (c) => ComparisonView.mount(c),
+            unmount: () => ComparisonView.unmount()
         }
     };
 
