@@ -2,9 +2,7 @@
    ALGOVIZ — NEOBRUTALISM DESIGN SYSTEM
    ============================================ */
 
-/* --- CSS Variables --- */
 :root {
-  /* Primary palette */
   --bg: #FAFAFA;
   --bg-card: #FFFFFF;
   --text: #1A1A1A;
@@ -12,7 +10,6 @@
   --border: #1A1A1A;
   --border-width: 3px;
 
-  /* Accent colors */
   --red: #FF6B6B;
   --teal: #4ECDC4;
   --yellow: #FFE66D;
@@ -22,37 +19,26 @@
   --orange: #FFA552;
   --blue: #6C9BCF;
 
-  /* Shadows */
   --shadow-sm: 3px 3px 0px var(--border);
   --shadow-md: 5px 5px 0px var(--border);
   --shadow-lg: 7px 7px 0px var(--border);
-  --shadow-accent: 5px 5px 0px var(--teal);
 
-  /* Typography */
   --font-heading: 'Space Mono', monospace;
   --font-body: 'Inter', sans-serif;
 
-  /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
-  --space-2xl: 48px;
 
-  /* Radius */
-  --radius: 0px;
-
-  /* Transitions */
   --transition-fast: 0.1s ease;
-  --transition-med: 0.2s ease;
-
-  /* Sidebar */
   --sidebar-width: 240px;
 }
 
-/* --- Reset --- */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -71,7 +57,6 @@ body {
   height: 100vh;
 }
 
-/* --- App Layout --- */
 #app {
   display: flex;
   height: 100vh;
@@ -86,7 +71,6 @@ body {
   border-right: var(--border-width) solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   z-index: 10;
 }
 
@@ -117,7 +101,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Navigation */
 #main-nav {
   flex: 1;
   padding: var(--space-md) 0;
@@ -148,7 +131,6 @@ body {
 .nav-item.active {
   background: var(--teal);
   border-left-color: var(--border);
-  color: var(--text);
 }
 
 .nav-icon {
@@ -187,18 +169,13 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0;
 }
 
 #view-container {
   height: 100%;
 }
 
-/* ============================================
-   COMPONENT LIBRARY
-   ============================================ */
-
-/* --- Brutalist Card --- */
+/* --- Components --- */
 .brutal-card {
   background: var(--bg-card);
   border: var(--border-width) solid var(--border);
@@ -217,7 +194,6 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-/* --- Buttons --- */
 .brutal-btn {
   font-family: var(--font-heading);
   font-size: 0.8rem;
@@ -290,7 +266,6 @@ body {
   box-shadow: var(--shadow-sm) !important;
 }
 
-/* --- Inputs --- */
 .brutal-input {
   font-family: var(--font-body);
   font-size: 0.85rem;
@@ -300,7 +275,6 @@ body {
   color: var(--text);
   outline: none;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition-fast);
   width: 100%;
 }
 
@@ -308,7 +282,6 @@ body {
   box-shadow: 4px 4px 0px var(--teal);
 }
 
-/* --- Select --- */
 .brutal-select {
   font-family: var(--font-heading);
   font-size: 0.75rem;
@@ -334,7 +307,6 @@ body {
   box-shadow: 4px 4px 0px var(--teal);
 }
 
-/* --- Range Slider --- */
 .brutal-range {
   -webkit-appearance: none;
   appearance: none;
@@ -355,12 +327,6 @@ body {
   border: var(--border-width) solid var(--border);
   cursor: pointer;
   box-shadow: 2px 2px 0px var(--border);
-  transition: all var(--transition-fast);
-}
-
-.brutal-range::-webkit-slider-thumb:hover {
-  background: var(--yellow);
-  transform: scale(1.1);
 }
 
 .brutal-range::-moz-range-thumb {
@@ -372,7 +338,6 @@ body {
   box-shadow: 2px 2px 0px var(--border);
 }
 
-/* --- Labels --- */
 .brutal-label {
   font-family: var(--font-heading);
   font-size: 0.65rem;
@@ -384,7 +349,6 @@ body {
   display: block;
 }
 
-/* --- Stats Badge --- */
 .stat-badge {
   display: inline-flex;
   align-items: center;
@@ -401,11 +365,7 @@ body {
   color: var(--purple);
 }
 
-/* ============================================
-   VIEW-SPECIFIC LAYOUTS
-   ============================================ */
-
-/* --- Page Header --- */
+/* --- Layout Sections --- */
 .page-header {
   padding: var(--space-lg) var(--space-xl);
   border-bottom: var(--border-width) solid var(--border);
@@ -428,7 +388,6 @@ body {
   color: var(--purple);
 }
 
-/* --- Toolbar --- */
 .toolbar {
   padding: var(--space-md) var(--space-xl);
   border-bottom: var(--border-width) solid var(--border);
@@ -452,7 +411,6 @@ body {
   margin: 0 var(--space-sm);
 }
 
-/* --- Controls Bar (playback) --- */
 .controls-bar {
   padding: var(--space-md) var(--space-xl);
   border-bottom: var(--border-width) solid var(--border);
@@ -494,7 +452,6 @@ body {
   margin-left: auto;
 }
 
-/* --- Canvas Area --- */
 .canvas-container {
   flex: 1;
   position: relative;
@@ -508,7 +465,6 @@ body {
   height: 100%;
 }
 
-/* --- Sorting View --- */
 .sorting-view {
   display: flex;
   flex-direction: column;
@@ -520,7 +476,6 @@ body {
   min-height: 300px;
 }
 
-/* --- Graph View --- */
 .graph-view {
   display: flex;
   flex-direction: column;
@@ -531,6 +486,7 @@ body {
   flex: 1;
   min-height: 400px;
   cursor: crosshair;
+  background: #fff;
 }
 
 .graph-view .canvas-container.dragging {
@@ -541,7 +497,6 @@ body {
   cursor: cell;
 }
 
-/* --- DS View --- */
 .ds-view {
   display: flex;
   flex-direction: column;
@@ -553,48 +508,6 @@ body {
   min-height: 300px;
 }
 
-/* --- Info Panel (overlay) --- */
-.info-panel {
-  position: absolute;
-  bottom: var(--space-md);
-  right: var(--space-md);
-  width: 280px;
-  z-index: 5;
-}
-
-.info-panel .brutal-card {
-  padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.info-panel h3 {
-  font-family: var(--font-heading);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: var(--space-sm);
-  padding-bottom: var(--space-xs);
-  border-bottom: 2px solid var(--border);
-}
-
-.info-panel .info-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  padding: var(--space-xs) 0;
-}
-
-.info-panel .info-label {
-  color: var(--text-muted);
-}
-
-.info-panel .info-value {
-  font-weight: 700;
-  font-family: var(--font-heading);
-  font-size: 0.75rem;
-}
-
-/* --- Algorithm Description --- */
 .algo-desc {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -616,7 +529,6 @@ body {
   white-space: nowrap;
 }
 
-/* --- Tab Bar --- */
 .tab-bar {
   display: flex;
   border-bottom: var(--border-width) solid var(--border);
@@ -636,7 +548,6 @@ body {
   background: transparent;
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--transition-fast);
 }
 
 .tab-item:hover {
@@ -647,7 +558,6 @@ body {
   background: var(--teal);
 }
 
-/* --- DS Operation Panel --- */
 .operation-panel {
   padding: var(--space-md) var(--space-xl);
   border-bottom: var(--border-width) solid var(--border);
@@ -669,7 +579,6 @@ body {
   box-shadow: 2px 2px 0px var(--border);
 }
 
-/* --- Weight Input Modal --- */
 .weight-modal {
   position: fixed;
   top: 0;
@@ -703,53 +612,6 @@ body {
   margin-top: var(--space-md);
 }
 
-/* --- Scrollbar Styling --- */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-  border-left: 2px solid var(--border);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
-/* --- Utility --- */
-.hidden {
-  display: none !important;
-}
-
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* --- Animations --- */
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes popIn {
-  0% { transform: scale(0.8); opacity: 0; }
-  80% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.animate-in {
-  animation: slideIn 0.3s ease forwards;
-}
-
-/* --- Legend --- */
 .legend {
   display: flex;
   align-items: center;
@@ -771,4 +633,34 @@ body {
   width: 16px;
   height: 16px;
   border: 2px solid var(--border);
+}
+
+.hidden {
+  display: none !important;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-left: 2px solid var(--border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

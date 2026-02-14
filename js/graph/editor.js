@@ -1,151 +1,80 @@
 /* ============================================
-   GRAPH EDITOR
-   Interactive Canvas-based graph editor
+   GRID EDITOR — Wall drawing & node placement
    ============================================ */
+const GridEditor = {
+    canvas: null, grid: null, renderer: null,
+    isDrawing: false, drawMode: 'wall', // 'wall' | 'erase'
+    draggingStart: false, draggingTarget: false,
+    onUpdate: null,
 
-const GraphEditor = {
-    canvas: null,
-    graph: null,
-    mode: 'node',             // 'node' | 'edge' | 'move' | 'delete'
-    draggingNode: null,
-    edgeStartNode: null,
-    onGraphChange: null,
-    mousePos: { x: 0, y: 0 },
+    init(canvas, grid, renderer, onUpdate) {
+        this.canvas = canvas; this.grid = grid;
+        this.renderer = renderer; this.onUpdate = onUpdate;
+        this.isDrawing = false; this.draggingStart = false; this.draggingTarget = false;
 
-    init(canvas, graph) {
-        this.canvas = canvas;
-        this.graph = graph;
-        this._bindEvents();
+        this._onDown = (e) => this._handleDown(e);
+        this._onMove = (e) => this._handleMove(e);
+        this._onUp = () => this._handleUp();
+        canvas.addEventListener('mousedown', this._onDown);
+        canvas.addEventListener('mousemove', this._onMove);
+        canvas.addEventListener('mouseup', this._onUp);
+        canvas.addEventListener('mouseleave', this._onUp);
     },
 
-    setMode(mode) {
-        this.mode = mode;
-        this.edgeStartNode = null;
-        const container = this.canvas.parentElement;
-        container.classList.remove('dragging', 'edge-mode');
-        if (mode === 'move') container.classList.add('dragging');
-        if (mode === 'edge') container.classList.add('edge-mode');
-    },
-
-    _getCanvasCoords(e) {
+    _cellAt(e) {
         const rect = this.canvas.getBoundingClientRect();
-        return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
+        const x = e.clientX - rect.left, y = e.clientY - rect.top;
+        const cellSize = this.renderer.cellSize;
+        const c = Math.floor(x / cellSize), r = Math.floor(y / cellSize);
+        return { r, c };
     },
 
-    _bindEvents() {
-        const self = this;
+    _handleDown(e) {
+        const { r, c } = this._cellAt(e);
+        if (!this.grid.isInBounds(r, c)) return;
 
-        this.canvas.addEventListener('mousedown', (e) => {
-            const pos = self._getCanvasCoords(e);
-            const nodeId = self.graph.getNodeAt(pos.x, pos.y);
+        const cell = this.grid.cells[r][c];
+        if (cell === CELL.START) { this.draggingStart = true; return; }
+        if (cell === CELL.TARGET) { this.draggingTarget = true; return; }
 
-            switch (self.mode) {
-                case 'node':
-                    if (nodeId === null) {
-                        self.graph.addNode(pos.x, pos.y);
-                        if (self.onGraphChange) self.onGraphChange();
-                    }
-                    break;
-                case 'edge':
-                    if (nodeId !== null) {
-                        if (self.edgeStartNode === null) {
-                            self.edgeStartNode = nodeId;
-                        } else {
-                            self._promptWeight(self.edgeStartNode, nodeId);
-                            self.edgeStartNode = null;
-                        }
-                    }
-                    break;
-                case 'move':
-                    if (nodeId !== null) {
-                        self.draggingNode = nodeId;
-                    }
-                    break;
-                case 'delete':
-                    if (nodeId !== null) {
-                        self.graph.removeNode(nodeId);
-                        if (self.onGraphChange) self.onGraphChange();
-                    } else {
-                        const edge = self.graph.getEdgeAt(pos.x, pos.y);
-                        if (edge) {
-                            self.graph.removeEdge(edge.from, edge.to);
-                            if (self.onGraphChange) self.onGraphChange();
-                        }
-                    }
-                    break;
-            }
-        });
-
-        this.canvas.addEventListener('mousemove', (e) => {
-            self.mousePos = self._getCanvasCoords(e);
-            if (self.draggingNode !== null) {
-                const node = self.graph.nodes.get(self.draggingNode);
-                if (node) {
-                    node.x = self.mousePos.x;
-                    node.y = self.mousePos.y;
-                    if (self.onGraphChange) self.onGraphChange();
-                }
-            }
-        });
-
-        this.canvas.addEventListener('mouseup', () => {
-            self.draggingNode = null;
-        });
-
-        this.canvas.addEventListener('mouseleave', () => {
-            self.draggingNode = null;
-        });
+        this.isDrawing = true;
+        this.drawMode = cell === CELL.WALL ? 'erase' : 'wall';
+        if (this.drawMode === 'wall') this.grid.setWall(r, c);
+        else this.grid.clearCell(r, c);
+        this._update();
     },
 
-    _promptWeight(from, to) {
-        // Create modal
-        const modal = document.createElement('div');
-        modal.className = 'weight-modal';
-        modal.innerHTML = `
-      <div class="modal-content">
-        <h3>Edge Weight</h3>
-        <input type="number" class="brutal-input" id="weight-input" value="1" min="1" max="99" autofocus>
-        <div class="modal-actions">
-          <button class="brutal-btn primary" id="weight-ok">Add Edge</button>
-          <button class="brutal-btn danger" id="weight-cancel">Cancel</button>
-        </div>
-      </div>
-    `;
-        document.body.appendChild(modal);
+    _handleMove(e) {
+        const { r, c } = this._cellAt(e);
+        if (!this.grid.isInBounds(r, c)) return;
 
-        const input = document.getElementById('weight-input');
-        input.focus();
-        input.select();
-
-        const cleanup = () => modal.remove();
-
-        document.getElementById('weight-ok').addEventListener('click', () => {
-            const weight = parseInt(input.value) || 1;
-            this.graph.addEdge(from, to, weight);
-            if (this.onGraphChange) this.onGraphChange();
-            cleanup();
-        });
-
-        document.getElementById('weight-cancel').addEventListener('click', cleanup);
-
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const weight = parseInt(input.value) || 1;
-                this.graph.addEdge(from, to, weight);
-                if (this.onGraphChange) this.onGraphChange();
-                cleanup();
-            }
-            if (e.key === 'Escape') cleanup();
-        });
+        if (this.draggingStart) {
+            this.grid.moveStart(r, c); this._update(); return;
+        }
+        if (this.draggingTarget) {
+            this.grid.moveTarget(r, c); this._update(); return;
+        }
+        if (this.isDrawing) {
+            if (this.drawMode === 'wall') this.grid.setWall(r, c);
+            else this.grid.clearCell(r, c);
+            this._update();
+        }
     },
+
+    _handleUp() {
+        this.isDrawing = false; this.draggingStart = false; this.draggingTarget = false;
+    },
+
+    _update() { if (this.onUpdate) this.onUpdate(); },
 
     destroy() {
-        this.canvas = null;
-        this.graph = null;
+        if (this.canvas) {
+            this.canvas.removeEventListener('mousedown', this._onDown);
+            this.canvas.removeEventListener('mousemove', this._onMove);
+            this.canvas.removeEventListener('mouseup', this._onUp);
+            this.canvas.removeEventListener('mouseleave', this._onUp);
+        }
+        this.canvas = null; this.grid = null; this.renderer = null;
     }
 };
-
-window.GraphEditor = GraphEditor;
+window.GridEditor = GridEditor;

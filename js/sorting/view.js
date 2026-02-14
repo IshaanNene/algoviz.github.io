@@ -1,44 +1,26 @@
 /* ============================================
    SORTING VIEW
-   Full page: toolbar, controls bar, canvas
    ============================================ */
-
 const SortingView = {
-    engine: null,
-    currentAlgo: 'bubble',
-    originalArray: [],
-    arraySize: 30,
-    resizeHandler: null,
+  engine: null, currentAlgo: 'bubble', originalArray: [], arraySize: 30, resizeHandler: null,
 
-    mount(container) {
-        this.engine = new AlgoEngine();
-        this.engine.baseDelay = 150;
+  mount(container) {
+    this.engine = new AlgoEngine(); this.engine.baseDelay = 150;
+    const algorithms = Object.keys(SortingAlgorithms.info);
+    const opts = algorithms.map(k => `<option value="${k}" ${k === this.currentAlgo ? 'selected' : ''}>${SortingAlgorithms.info[k].name}</option>`).join('');
+    const info = SortingAlgorithms.info[this.currentAlgo];
 
-        const algorithms = Object.keys(SortingAlgorithms.info);
-        const algoOptions = algorithms.map(k =>
-            `<option value="${k}" ${k === this.currentAlgo ? 'selected' : ''}>${SortingAlgorithms.info[k].name}</option>`
-        ).join('');
-
-        const info = SortingAlgorithms.info[this.currentAlgo];
-
-        container.innerHTML = `
+    container.innerHTML = `
       <div class="sorting-view">
-        <!-- Header -->
         <div class="page-header">
           <h2 class="page-title">Sorting <span class="title-accent">Algorithms</span></h2>
-          <div class="toolbar-group">
-            <select id="sort-algo-select" class="brutal-select">${algoOptions}</select>
-          </div>
+          <div class="toolbar-group"><select id="sort-algo-select" class="brutal-select">${opts}</select></div>
         </div>
-
-        <!-- Algorithm Info -->
         <div class="algo-desc" id="sort-algo-desc">
           <span>${info.desc}</span>
           <span class="complexity-badge" id="sort-complexity">Time: ${info.time}</span>
           <span class="complexity-badge" id="sort-space" style="background:var(--green)">Space: ${info.space}</span>
         </div>
-
-        <!-- Toolbar -->
         <div class="toolbar">
           <div class="toolbar-group">
             <label class="brutal-label" style="margin:0">Size</label>
@@ -51,8 +33,6 @@ const SortingView = {
           <button id="sort-reversed" class="brutal-btn small danger">Reversed</button>
           <button id="sort-few-unique" class="brutal-btn small purple">Few Unique</button>
         </div>
-
-        <!-- Playback Controls -->
         <div class="controls-bar">
           <div class="playback-controls">
             <button id="sort-step-back" class="brutal-btn icon-btn small">⏮</button>
@@ -76,8 +56,6 @@ const SortingView = {
             <span class="stat-badge" id="sort-swaps">Swaps: <span class="stat-value">0</span></span>
           </div>
         </div>
-
-        <!-- Legend -->
         <div class="legend">
           <div class="legend-item"><div class="legend-color" style="background:#1A1A1A"></div><span>Default</span></div>
           <div class="legend-item"><div class="legend-color" style="background:#845EC2"></div><span>Comparing</span></div>
@@ -86,216 +64,90 @@ const SortingView = {
           <div class="legend-item"><div class="legend-color" style="background:#4ECDC4"></div><span>Sorted</span></div>
           <div class="legend-item"><div class="legend-color" style="background:#FFE66D"></div><span>Pivot</span></div>
         </div>
+        <div class="canvas-container"><canvas id="sort-canvas"></canvas></div>
+      </div>`;
 
-        <!-- Canvas -->
-        <div class="canvas-container">
-          <canvas id="sort-canvas"></canvas>
-        </div>
-      </div>
-    `;
+    SortingRenderer.init(document.getElementById('sort-canvas'));
+    this._generateArray();
+    this._bindEvents();
+  },
 
-        // Init renderer
-        const canvas = document.getElementById('sort-canvas');
-        SortingRenderer.init(canvas);
+  _bindEvents() {
+    const self = this; let comparisons = 0, swaps = 0;
+    document.getElementById('sort-algo-select').addEventListener('change', function () {
+      self.currentAlgo = this.value;
+      const info = SortingAlgorithms.info[self.currentAlgo];
+      document.getElementById('sort-algo-desc').querySelector('span').textContent = info.desc;
+      document.getElementById('sort-complexity').textContent = 'Time: ' + info.time;
+      document.getElementById('sort-space').textContent = 'Space: ' + info.space;
+      self.engine.stop(); self._updatePlayPause(false); SortingRenderer.reset(self.originalArray);
+      self.engine.steps = [];  // clear cached steps so Play recomputes for new algo
+      document.getElementById('sort-timeline').value = 0;
+      document.getElementById('sort-timeline').max = 0;
+      self._updateStepInfo(0, 0); self._updateStats(0, 0);
+    });
+    const sizeSlider = document.getElementById('sort-size');
+    sizeSlider.addEventListener('input', function () { self.arraySize = parseInt(this.value); document.getElementById('sort-size-val').querySelector('.stat-value').textContent = self.arraySize; });
+    sizeSlider.addEventListener('change', function () { self._generateArray(); });
+    document.getElementById('sort-generate').addEventListener('click', () => this._generateArray());
+    document.getElementById('sort-nearly').addEventListener('click', () => this._generateArray('nearly'));
+    document.getElementById('sort-reversed').addEventListener('click', () => this._generateArray('reversed'));
+    document.getElementById('sort-few-unique').addEventListener('click', () => this._generateArray('few-unique'));
 
-        // Generate initial array
-        this._generateArray();
+    const speedValues = [0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 16];
+    document.getElementById('sort-speed').addEventListener('input', function () {
+      const sp = speedValues[parseInt(this.value) - 1] || 1; self.engine.setSpeed(sp);
+      document.getElementById('sort-speed-val').querySelector('.stat-value').textContent = sp + '×';
+    });
 
-        // Bind events
-        this._bindEvents();
-    },
+    document.getElementById('sort-play').addEventListener('click', () => {
+      if (this.engine.steps.length === 0) {
+        const steps = SortingAlgorithms.run(this.currentAlgo, [...this.originalArray]);
+        this.engine.loadSteps(steps); document.getElementById('sort-timeline').max = steps.length - 1;
+      }
+      comparisons = 0; swaps = 0; this.engine.play(); this._updatePlayPause(true);
+    });
+    document.getElementById('sort-pause').addEventListener('click', () => { this.engine.pause(); this._updatePlayPause(false); });
+    document.getElementById('sort-stop').addEventListener('click', () => { this.engine.stop(); comparisons = 0; swaps = 0; this._updateStats(0, 0); this._updatePlayPause(false); SortingRenderer.reset(this.originalArray); document.getElementById('sort-timeline').value = 0; this._updateStepInfo(0, 0); });
+    document.getElementById('sort-step-fwd').addEventListener('click', () => { if (this.engine.steps.length === 0) { const steps = SortingAlgorithms.run(this.currentAlgo, [...this.originalArray]); this.engine.loadSteps(steps); document.getElementById('sort-timeline').max = steps.length - 1; } this.engine.stepForward(); });
+    document.getElementById('sort-step-back').addEventListener('click', () => { this.engine.stepBackward(); });
 
-    _bindEvents() {
-        const self = this;
-        let comparisons = 0, swaps = 0;
+    document.getElementById('sort-timeline').addEventListener('input', function () {
+      const idx = parseInt(this.value); self.engine.pause(); self._updatePlayPause(false);
+      comparisons = 0; swaps = 0;
+      for (let i = 0; i <= idx; i++) { const s = self.engine.steps[i]; if (s && s.type === 'compare') comparisons++; if (s && s.type === 'swap') swaps++; }
+      self._updateStats(comparisons, swaps); self.engine.jumpToStep(idx);
+    });
 
-        // Algorithm select
-        document.getElementById('sort-algo-select').addEventListener('change', function () {
-            self.currentAlgo = this.value;
-            const info = SortingAlgorithms.info[self.currentAlgo];
-            document.getElementById('sort-algo-desc').querySelector('span').textContent = info.desc;
-            document.getElementById('sort-complexity').textContent = 'Time: ' + info.time;
-            document.getElementById('sort-space').textContent = 'Space: ' + info.space;
-            self.engine.stop();
-            self._updatePlayPause(false);
-            SortingRenderer.reset(self.originalArray);
-        });
+    this.engine.onStep = (step, index) => {
+      if (step.type === 'compare') comparisons++; if (step.type === 'swap') swaps++;
+      SortingRenderer.applyStep(step); document.getElementById('sort-timeline').value = index;
+      this._updateStepInfo(index + 1, this.engine.steps.length); this._updateStats(comparisons, swaps);
+    };
+    this.engine.onComplete = () => { this._updatePlayPause(false); };
+    this.engine.onReset = () => { comparisons = 0; swaps = 0; SortingRenderer.reset(this.originalArray); this._updateStats(0, 0); };
+    this.resizeHandler = () => SortingRenderer._resize();
+    window.addEventListener('resize', this.resizeHandler);
+  },
 
-        // Size slider
-        const sizeSlider = document.getElementById('sort-size');
-        sizeSlider.addEventListener('input', function () {
-            self.arraySize = parseInt(this.value);
-            document.getElementById('sort-size-val').querySelector('.stat-value').textContent = self.arraySize;
-        });
-        sizeSlider.addEventListener('change', function () {
-            self._generateArray();
-        });
-
-        // Generate buttons
-        document.getElementById('sort-generate').addEventListener('click', () => this._generateArray());
-        document.getElementById('sort-nearly').addEventListener('click', () => this._generateArray('nearly'));
-        document.getElementById('sort-reversed').addEventListener('click', () => this._generateArray('reversed'));
-        document.getElementById('sort-few-unique').addEventListener('click', () => this._generateArray('few-unique'));
-
-        // Speed slider
-        const speedSlider = document.getElementById('sort-speed');
-        const speedValues = [0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 16];
-        speedSlider.addEventListener('input', function () {
-            const speed = speedValues[parseInt(this.value) - 1] || 1;
-            self.engine.setSpeed(speed);
-            document.getElementById('sort-speed-val').querySelector('.stat-value').textContent = speed + '×';
-        });
-
-        // Playback
-        document.getElementById('sort-play').addEventListener('click', () => {
-            // Generate steps if not already
-            if (this.engine.steps.length === 0) {
-                const steps = SortingAlgorithms.run(this.currentAlgo, [...this.originalArray]);
-                this.engine.loadSteps(steps);
-                document.getElementById('sort-timeline').max = steps.length - 1;
-            }
-            comparisons = 0;
-            swaps = 0;
-            this.engine.play();
-            this._updatePlayPause(true);
-        });
-
-        document.getElementById('sort-pause').addEventListener('click', () => {
-            this.engine.pause();
-            this._updatePlayPause(false);
-        });
-
-        document.getElementById('sort-stop').addEventListener('click', () => {
-            this.engine.stop();
-            comparisons = 0;
-            swaps = 0;
-            this._updateStats(0, 0);
-            this._updatePlayPause(false);
-            SortingRenderer.reset(this.originalArray);
-            document.getElementById('sort-timeline').value = 0;
-            this._updateStepInfo(0, 0);
-        });
-
-        document.getElementById('sort-step-fwd').addEventListener('click', () => {
-            if (this.engine.steps.length === 0) {
-                const steps = SortingAlgorithms.run(this.currentAlgo, [...this.originalArray]);
-                this.engine.loadSteps(steps);
-                document.getElementById('sort-timeline').max = steps.length - 1;
-            }
-            this.engine.stepForward();
-        });
-
-        document.getElementById('sort-step-back').addEventListener('click', () => {
-            this.engine.stepBackward();
-        });
-
-        // Timeline scrubber
-        const timeline = document.getElementById('sort-timeline');
-        timeline.addEventListener('input', function () {
-            const idx = parseInt(this.value);
-            self.engine.pause();
-            self._updatePlayPause(false);
-            // Rebuild state counts for this position
-            comparisons = 0;
-            swaps = 0;
-            for (let i = 0; i <= idx; i++) {
-                const s = self.engine.steps[i];
-                if (s && s.type === 'compare') comparisons++;
-                if (s && s.type === 'swap') swaps++;
-            }
-            self._updateStats(comparisons, swaps);
-            self.engine.jumpToStep(idx);
-        });
-
-        // Engine callbacks
-        this.engine.onStep = (step, index) => {
-            if (step.type === 'compare') comparisons++;
-            if (step.type === 'swap') swaps++;
-            SortingRenderer.applyStep(step);
-            document.getElementById('sort-timeline').value = index;
-            this._updateStepInfo(index + 1, this.engine.steps.length);
-            this._updateStats(comparisons, swaps);
-        };
-
-        this.engine.onComplete = () => {
-            this._updatePlayPause(false);
-        };
-
-        this.engine.onReset = () => {
-            comparisons = 0;
-            swaps = 0;
-            SortingRenderer.reset(this.originalArray);
-            this._updateStats(0, 0);
-        };
-
-        // Resize handling
-        this.resizeHandler = () => SortingRenderer._resize();
-        window.addEventListener('resize', this.resizeHandler);
-    },
-
-    _generateArray(type = 'random') {
-        this.engine.stop();
-        this._updatePlayPause(false);
-        const n = this.arraySize;
-        let arr = [];
-        switch (type) {
-            case 'nearly':
-                arr = Array.from({ length: n }, (_, i) => i + 1);
-                // Swap a few random pairs
-                for (let i = 0; i < Math.max(2, Math.floor(n * 0.1)); i++) {
-                    const a = Math.floor(Math.random() * n);
-                    const b = Math.floor(Math.random() * n);
-                    [arr[a], arr[b]] = [arr[b], arr[a]];
-                }
-                break;
-            case 'reversed':
-                arr = Array.from({ length: n }, (_, i) => n - i);
-                break;
-            case 'few-unique':
-                const vals = [10, 30, 50, 70, 90];
-                arr = Array.from({ length: n }, () => vals[Math.floor(Math.random() * vals.length)]);
-                break;
-            default:
-                arr = Array.from({ length: n }, () => Math.floor(Math.random() * 95) + 5);
-        }
-        this.originalArray = [...arr];
-        SortingRenderer.setArray(arr);
-        document.getElementById('sort-timeline').value = 0;
-        document.getElementById('sort-timeline').max = 0;
-        this._updateStepInfo(0, 0);
-        this._updateStats(0, 0);
-        this.engine.steps = [];
-    },
-
-    _updatePlayPause(playing) {
-        const playBtn = document.getElementById('sort-play');
-        const pauseBtn = document.getElementById('sort-pause');
-        if (playing) {
-            playBtn.classList.add('hidden');
-            pauseBtn.classList.remove('hidden');
-        } else {
-            playBtn.classList.remove('hidden');
-            pauseBtn.classList.add('hidden');
-        }
-    },
-
-    _updateStepInfo(current, total) {
-        const el = document.getElementById('sort-step-info');
-        if (el) el.querySelector('.stat-value').textContent = `${current}/${total}`;
-    },
-
-    _updateStats(comp, sw) {
-        const c = document.getElementById('sort-comparisons');
-        const s = document.getElementById('sort-swaps');
-        if (c) c.querySelector('.stat-value').textContent = comp;
-        if (s) s.querySelector('.stat-value').textContent = sw;
-    },
-
-    unmount() {
-        if (this.engine) this.engine.stop();
-        if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
-        SortingRenderer.destroy();
+  _generateArray(type = 'random') {
+    this.engine.stop(); this._updatePlayPause(false);
+    const n = this.arraySize; let arr = [];
+    switch (type) {
+      case 'nearly': arr = Array.from({ length: n }, (_, i) => i + 1); for (let i = 0; i < Math.max(2, Math.floor(n * 0.1)); i++) { const a = Math.floor(Math.random() * n), b = Math.floor(Math.random() * n);[arr[a], arr[b]] = [arr[b], arr[a]]; } break;
+      case 'reversed': arr = Array.from({ length: n }, (_, i) => n - i); break;
+      case 'few-unique': const vals = [10, 30, 50, 70, 90]; arr = Array.from({ length: n }, () => vals[Math.floor(Math.random() * vals.length)]); break;
+      default: arr = Array.from({ length: n }, () => Math.floor(Math.random() * 95) + 5);
     }
-};
+    this.originalArray = [...arr]; SortingRenderer.setArray(arr);
+    document.getElementById('sort-timeline').value = 0; document.getElementById('sort-timeline').max = 0;
+    this._updateStepInfo(0, 0); this._updateStats(0, 0); this.engine.steps = [];
+  },
 
+  _updatePlayPause(p) { document.getElementById('sort-play').classList.toggle('hidden', p); document.getElementById('sort-pause').classList.toggle('hidden', !p); },
+  _updateStepInfo(c, t) { const el = document.getElementById('sort-step-info'); if (el) el.querySelector('.stat-value').textContent = `${c}/${t}`; },
+  _updateStats(c, s) { const ce = document.getElementById('sort-comparisons'), se = document.getElementById('sort-swaps'); if (ce) ce.querySelector('.stat-value').textContent = c; if (se) se.querySelector('.stat-value').textContent = s; },
+
+  unmount() { if (this.engine) this.engine.stop(); if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler); SortingRenderer.destroy(); }
+};
 window.SortingView = SortingView;

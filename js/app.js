@@ -1,8 +1,7 @@
 /* ============================================
-   SPA ROUTER + APP INITIALIZATION
+   APP — SPA Router
    ============================================ */
-
-(function () {
+document.addEventListener('DOMContentLoaded', () => {
     const viewContainer = document.getElementById('view-container');
     const navItems = document.querySelectorAll('.nav-item');
 
@@ -25,48 +24,24 @@
     let currentView = null;
 
     function navigate(route) {
-        // Unmount current view
         if (currentView && views[currentView] && views[currentView].unmount) {
             views[currentView].unmount();
         }
-
-        // Update nav
+        viewContainer.innerHTML = '';
         navItems.forEach(item => {
             item.classList.toggle('active', item.dataset.route === route);
         });
-
-        // Clear container
-        viewContainer.innerHTML = '';
-
-        // Mount new view
         if (views[route]) {
-            currentView = route;
             views[route].mount(viewContainer);
-        } else {
-            // Default to sorting
-            currentView = 'sorting';
-            views['sorting'].mount(viewContainer);
-            history.replaceState(null, '', '#sorting');
+            currentView = route;
         }
     }
 
-    // Nav click handlers
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const route = item.dataset.route;
-            history.pushState(null, '', `#${route}`);
-            navigate(route);
-        });
-    });
+    function onHashChange() {
+        const hash = window.location.hash.slice(1) || 'sorting';
+        navigate(hash);
+    }
 
-    // Handle hash changes
-    window.addEventListener('hashchange', () => {
-        const route = location.hash.slice(1) || 'sorting';
-        navigate(route);
-    });
-
-    // Initial route
-    const initialRoute = location.hash.slice(1) || 'sorting';
-    navigate(initialRoute);
-})();
+    window.addEventListener('hashchange', onHashChange);
+    onHashChange();
+});

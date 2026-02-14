@@ -1,354 +1,388 @@
 /* ============================================
-   GRAPH ALGORITHMS
-   BFS, DFS, Prim, Kruskal, Dijkstra, 
-   Bellman-Ford, A*
+   PATHFINDING ALGORITHMS + MAZE GENERATORS
+   (fixed recursive division + cleaner mazes)
    ============================================ */
-
-const GraphAlgorithms = {
+const PathAlgorithms = {
     info: {
-        'bfs': { name: 'BFS', time: 'O(V+E)', desc: 'Breadth-first search explores level by level using a queue.' },
-        'dfs': { name: 'DFS', time: 'O(V+E)', desc: 'Depth-first search explores as deep as possible before backtracking.' },
-        'dijkstra': { name: 'Dijkstra', time: 'O((V+E)logV)', desc: 'Finds shortest path from source to all vertices using a priority queue.' },
-        'bellman-ford': { name: 'Bellman-Ford', time: 'O(VE)', desc: 'Finds shortest path, handles negative weights, detects negative cycles.' },
-        'astar': { name: 'A*', time: 'O(E)', desc: 'Informed search using heuristic to find shortest path to target.' },
-        'prim': { name: "Prim's MST", time: 'O((V+E)logV)', desc: 'Grows MST from a source by always picking the minimum weight edge.' },
-        'kruskal': { name: "Kruskal's MST", time: 'O(ElogE)', desc: 'Builds MST by sorting edges and adding them if they don\'t form a cycle.' },
+        'dijkstra': { name: "Dijkstra's Algorithm", desc: "Dijkstra's Algorithm is weighted and guarantees the shortest path!" },
+        'astar': { name: 'A* Search', desc: "A* Search uses heuristics to guarantee the shortest path!" },
+        'greedy': { name: 'Greedy Best-first Search', desc: "Greedy Best-first Search is not weighted and does not guarantee the shortest path!" },
+        'bfs': { name: 'Breadth-first Search', desc: "Breadth-first Search is unweighted and guarantees the shortest path!" },
+        'dfs': { name: 'Depth-first Search', desc: "Depth-first Search is unweighted and does not guarantee the shortest path!" },
+        'swarm': { name: 'Swarm Algorithm', desc: "Swarm Algorithm is weighted and does not guarantee the shortest path!" },
+        'bidirectional': { name: 'Bidirectional BFS', desc: "Bidirectional BFS searches from both start and target simultaneously!" },
     },
 
-    run(name, graph, source, target) {
+    mazes: {
+        'recursive-division': 'Recursive Division',
+        'recursive-vertical': 'Recursive Division (vertical skew)',
+        'recursive-horizontal': 'Recursive Division (horizontal skew)',
+        'random': 'Basic Random Maze',
+        'stair': 'Simple Stair Pattern',
+    },
+
+    /* ==================== PATHFINDING ==================== */
+
+    run(name, grid) {
         switch (name) {
-            case 'bfs': return this._bfs(graph, source);
-            case 'dfs': return this._dfs(graph, source);
-            case 'dijkstra': return this._dijkstra(graph, source, target);
-            case 'bellman-ford': return this._bellmanFord(graph, source, target);
-            case 'astar': return this._astar(graph, source, target);
-            case 'prim': return this._prim(graph, source);
-            case 'kruskal': return this._kruskal(graph);
-            default: return [];
+            case 'dijkstra': return this._dijkstra(grid);
+            case 'astar': return this._astar(grid);
+            case 'greedy': return this._greedy(grid);
+            case 'bfs': return this._bfs(grid);
+            case 'dfs': return this._dfs(grid);
+            case 'swarm': return this._swarm(grid);
+            case 'bidirectional': return this._bidirectional(grid);
         }
+        return { visited: [], path: [] };
     },
 
-    _bfs(graph, source) {
-        const steps = [];
-        const visited = new Set();
-        const queue = [source];
-        visited.add(source);
-        steps.push({ type: 'source', node: source });
-        steps.push({ type: 'visit', node: source });
+    /* ---- BFS ---- */
+    _bfs(grid) {
+        const visited = [], prev = {};
+        const sk = `${grid.startRow},${grid.startCol}`;
+        const q = [[grid.startRow, grid.startCol]];
+        const seen = new Set([sk]);
+        prev[sk] = null;
 
-        while (queue.length > 0) {
-            const node = queue.shift();
-            steps.push({ type: 'visited', node });
+        while (q.length > 0) {
+            const [r, c] = q.shift();
+            const k = `${r},${c}`;
+            visited.push({ type: 'visit', r, c });
+            if (r === grid.targetRow && c === grid.targetCol)
+                return { visited, path: this._tracePath(prev, grid) };
 
-            const neighbors = graph.getNeighbors(node);
-            for (const { node: neighbor } of neighbors) {
-                steps.push({ type: 'consider', from: node, to: neighbor });
-                if (!visited.has(neighbor)) {
-                    visited.add(neighbor);
-                    queue.push(neighbor);
-                    steps.push({ type: 'enqueue', node: neighbor });
-                    steps.push({ type: 'relax', from: node, to: neighbor });
+            for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                const nk = `${nr},${nc}`;
+                if (!seen.has(nk)) {
+                    seen.add(nk); prev[nk] = k; q.push([nr, nc]);
+                    visited.push({ type: 'visiting', r: nr, c: nc });
                 }
             }
         }
-        return steps;
+        return { visited, path: [] };
     },
 
-    _dfs(graph, source) {
-        const steps = [];
-        const visited = new Set();
-        steps.push({ type: 'source', node: source });
+    /* ---- DFS ---- */
+    _dfs(grid) {
+        const visited = [], prev = {};
+        const sk = `${grid.startRow},${grid.startCol}`;
+        const stack = [[grid.startRow, grid.startCol]];
+        const seen = new Set([sk]);
+        prev[sk] = null;
 
-        const dfsRecurse = (node) => {
-            visited.add(node);
-            steps.push({ type: 'visit', node });
+        while (stack.length > 0) {
+            const [r, c] = stack.pop();
+            const k = `${r},${c}`;
+            visited.push({ type: 'visit', r, c });
+            if (r === grid.targetRow && c === grid.targetCol)
+                return { visited, path: this._tracePath(prev, grid) };
 
-            const neighbors = graph.getNeighbors(node);
-            for (const { node: neighbor } of neighbors) {
-                steps.push({ type: 'consider', from: node, to: neighbor });
-                if (!visited.has(neighbor)) {
-                    steps.push({ type: 'relax', from: node, to: neighbor });
-                    dfsRecurse(neighbor);
+            const neighbors = grid.getNeighbors(r, c);
+            for (let i = neighbors.length - 1; i >= 0; i--) {
+                const [nr, nc] = neighbors[i];
+                const nk = `${nr},${nc}`;
+                if (!seen.has(nk)) {
+                    seen.add(nk); prev[nk] = k; stack.push([nr, nc]);
                 }
             }
-            steps.push({ type: 'visited', node });
-        };
-
-        dfsRecurse(source);
-        return steps;
+        }
+        return { visited, path: [] };
     },
 
-    _dijkstra(graph, source, target) {
-        const steps = [];
-        const dist = {};
-        const prev = {};
-        const visited = new Set();
-        const pq = []; // Simple array-based priority queue
-
-        for (const [id] of graph.nodes) {
-            dist[id] = Infinity;
-            prev[id] = null;
-        }
-        dist[source] = 0;
-        pq.push({ node: source, dist: 0 });
-
-        steps.push({ type: 'source', node: source });
-        steps.push({ type: 'distance', node: source, distance: 0 });
+    /* ---- Dijkstra ---- */
+    _dijkstra(grid) {
+        const visited = [], dist = {}, prev = {};
+        const sk = `${grid.startRow},${grid.startCol}`;
+        dist[sk] = 0; prev[sk] = null;
+        // Simple priority queue via sorted array
+        const pq = [{ key: sk, d: 0 }];
+        const done = new Set();
 
         while (pq.length > 0) {
-            // Extract min
-            pq.sort((a, b) => a.dist - b.dist);
-            const { node: u } = pq.shift();
+            pq.sort((a, b) => a.d - b.d);
+            const { key } = pq.shift();
+            if (done.has(key)) continue;
+            done.add(key);
+            const [r, c] = key.split(',').map(Number);
+            visited.push({ type: 'visit', r, c });
+            if (r === grid.targetRow && c === grid.targetCol)
+                return { visited, path: this._tracePath(prev, grid) };
 
-            if (visited.has(u)) continue;
-            visited.add(u);
-            steps.push({ type: 'visit', node: u });
-
-            if (target !== undefined && u === target) {
-                // Reconstruct path
-                this._reconstructPath(steps, prev, source, target);
-                return steps;
-            }
-
-            const neighbors = graph.getNeighbors(u);
-            for (const { node: v, weight } of neighbors) {
-                if (visited.has(v)) continue;
-                const alt = dist[u] + weight;
-                steps.push({ type: 'consider', from: u, to: v });
-                if (alt < dist[v]) {
-                    dist[v] = alt;
-                    prev[v] = u;
-                    pq.push({ node: v, dist: alt });
-                    steps.push({ type: 'relax', from: u, to: v, distance: alt });
-                    steps.push({ type: 'distance', node: v, distance: alt });
-                }
-            }
-            steps.push({ type: 'visited', node: u });
-        }
-
-        if (target !== undefined) {
-            this._reconstructPath(steps, prev, source, target);
-        }
-        return steps;
-    },
-
-    _bellmanFord(graph, source, target) {
-        const steps = [];
-        const dist = {};
-        const prev = {};
-
-        for (const [id] of graph.nodes) {
-            dist[id] = Infinity;
-            prev[id] = null;
-        }
-        dist[source] = 0;
-        steps.push({ type: 'source', node: source });
-        steps.push({ type: 'distance', node: source, distance: 0 });
-
-        const nodeCount = graph.nodes.size;
-
-        for (let i = 0; i < nodeCount - 1; i++) {
-            for (const edge of graph.edges) {
-                // Process both directions for undirected
-                const pairs = graph.directed
-                    ? [[edge.from, edge.to]]
-                    : [[edge.from, edge.to], [edge.to, edge.from]];
-
-                for (const [u, v] of pairs) {
-                    if (dist[u] === Infinity) continue;
-                    steps.push({ type: 'consider', from: u, to: v });
-                    const alt = dist[u] + edge.weight;
-                    if (alt < dist[v]) {
-                        dist[v] = alt;
-                        prev[v] = u;
-                        steps.push({ type: 'relax', from: u, to: v, distance: alt });
-                        steps.push({ type: 'distance', node: v, distance: alt });
-                        steps.push({ type: 'visit', node: v });
-                    }
+            for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                const nk = `${nr},${nc}`;
+                const w = grid.cells[nr][nc] === CELL.WEIGHT ? 10 : 1;
+                const alt = dist[key] + w;
+                if (dist[nk] === undefined || alt < dist[nk]) {
+                    dist[nk] = alt; prev[nk] = key;
+                    pq.push({ key: nk, d: alt });
+                    visited.push({ type: 'visiting', r: nr, c: nc });
                 }
             }
         }
-
-        // Mark all as visited
-        for (const [id] of graph.nodes) {
-            steps.push({ type: 'visited', node: id });
-        }
-
-        if (target !== undefined) {
-            this._reconstructPath(steps, prev, source, target);
-        }
-        return steps;
+        return { visited, path: [] };
     },
 
-    _astar(graph, source, target) {
+    /* ---- A* ---- */
+    _astar(grid) {
+        const h = (r, c) => Math.abs(r - grid.targetRow) + Math.abs(c - grid.targetCol);
+        const visited = [], gScore = {}, prev = {};
+        const sk = `${grid.startRow},${grid.startCol}`;
+        gScore[sk] = 0; prev[sk] = null;
+        const open = [{ key: sk, f: h(grid.startRow, grid.startCol) }];
+        const closed = new Set();
+
+        while (open.length > 0) {
+            open.sort((a, b) => a.f - b.f);
+            const { key } = open.shift();
+            if (closed.has(key)) continue;
+            closed.add(key);
+            const [r, c] = key.split(',').map(Number);
+            visited.push({ type: 'visit', r, c });
+            if (r === grid.targetRow && c === grid.targetCol)
+                return { visited, path: this._tracePath(prev, grid) };
+
+            for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                const nk = `${nr},${nc}`;
+                const w = grid.cells[nr][nc] === CELL.WEIGHT ? 10 : 1;
+                const tg = gScore[key] + w;
+                if (gScore[nk] === undefined || tg < gScore[nk]) {
+                    gScore[nk] = tg; prev[nk] = key;
+                    open.push({ key: nk, f: tg + h(nr, nc) });
+                    visited.push({ type: 'visiting', r: nr, c: nc });
+                }
+            }
+        }
+        return { visited, path: [] };
+    },
+
+    /* ---- Greedy Best-first ---- */
+    _greedy(grid) {
+        const h = (r, c) => Math.abs(r - grid.targetRow) + Math.abs(c - grid.targetCol);
+        const visited = [], prev = {};
+        const sk = `${grid.startRow},${grid.startCol}`;
+        prev[sk] = null;
+        const open = [{ key: sk, f: h(grid.startRow, grid.startCol) }];
+        const closed = new Set();
+
+        while (open.length > 0) {
+            open.sort((a, b) => a.f - b.f);
+            const { key } = open.shift();
+            if (closed.has(key)) continue;
+            closed.add(key);
+            const [r, c] = key.split(',').map(Number);
+            visited.push({ type: 'visit', r, c });
+            if (r === grid.targetRow && c === grid.targetCol)
+                return { visited, path: this._tracePath(prev, grid) };
+
+            for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                const nk = `${nr},${nc}`;
+                if (!closed.has(nk) && prev[nk] === undefined) {
+                    prev[nk] = key;
+                    open.push({ key: nk, f: h(nr, nc) });
+                    visited.push({ type: 'visiting', r: nr, c: nc });
+                }
+            }
+        }
+        return { visited, path: [] };
+    },
+
+    /* ---- Swarm ---- */
+    _swarm(grid) {
+        const h1 = (r, c) => Math.abs(r - grid.targetRow) + Math.abs(c - grid.targetCol);
+        const h2 = (r, c) => Math.sqrt((r - grid.targetRow) ** 2 + (c - grid.targetCol) ** 2);
+        const visited = [], gScore = {}, prev = {};
+        const sk = `${grid.startRow},${grid.startCol}`;
+        gScore[sk] = 0; prev[sk] = null;
+        const open = [{ key: sk, f: 0 }];
+        const closed = new Set();
+
+        while (open.length > 0) {
+            open.sort((a, b) => a.f - b.f);
+            const { key } = open.shift();
+            if (closed.has(key)) continue;
+            closed.add(key);
+            const [r, c] = key.split(',').map(Number);
+            visited.push({ type: 'visit', r, c });
+            if (r === grid.targetRow && c === grid.targetCol)
+                return { visited, path: this._tracePath(prev, grid) };
+
+            for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                const nk = `${nr},${nc}`;
+                const w = grid.cells[nr][nc] === CELL.WEIGHT ? 10 : 1;
+                const tg = gScore[key] + w;
+                if (gScore[nk] === undefined || tg < gScore[nk]) {
+                    gScore[nk] = tg; prev[nk] = key;
+                    open.push({ key: nk, f: tg + h1(nr, nc) * 1.5 + h2(nr, nc) * 0.5 });
+                    visited.push({ type: 'visiting', r: nr, c: nc });
+                }
+            }
+        }
+        return { visited, path: [] };
+    },
+
+    /* ---- Bidirectional BFS ---- */
+    _bidirectional(grid) {
+        const visited = [];
+        const prevA = new Map(), prevB = new Map();
+        const sk = `${grid.startRow},${grid.startCol}`;
+        const tk = `${grid.targetRow},${grid.targetCol}`;
+        prevA.set(sk, null); prevB.set(tk, null);
+        const qA = [[grid.startRow, grid.startCol]];
+        const qB = [[grid.targetRow, grid.targetCol]];
+
+        while (qA.length > 0 || qB.length > 0) {
+            if (qA.length > 0) {
+                const [r, c] = qA.shift(); const k = `${r},${c}`;
+                visited.push({ type: 'visit', r, c });
+                if (prevB.has(k)) return { visited, path: this._biTracePath(prevA, prevB, k) };
+                for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                    const nk = `${nr},${nc}`;
+                    if (!prevA.has(nk)) { prevA.set(nk, k); qA.push([nr, nc]); visited.push({ type: 'visiting', r: nr, c: nc }); }
+                }
+            }
+            if (qB.length > 0) {
+                const [r, c] = qB.shift(); const k = `${r},${c}`;
+                visited.push({ type: 'visit', r, c });
+                if (prevA.has(k)) return { visited, path: this._biTracePath(prevA, prevB, k) };
+                for (const [nr, nc] of grid.getNeighbors(r, c)) {
+                    const nk = `${nr},${nc}`;
+                    if (!prevB.has(nk)) { prevB.set(nk, k); qB.push([nr, nc]); visited.push({ type: 'visiting', r: nr, c: nc }); }
+                }
+            }
+        }
+        return { visited, path: [] };
+    },
+
+    /* ---- Path traceback ---- */
+    _tracePath(prev, grid) {
+        const path = [];
+        let key = `${grid.targetRow},${grid.targetCol}`;
+        while (key !== null) {
+            const [r, c] = key.split(',').map(Number);
+            path.unshift({ type: 'path', r, c });
+            key = prev[key] !== undefined ? prev[key] : null;
+        }
+        return path;
+    },
+
+    _biTracePath(prevA, prevB, meetKey) {
+        const path = [];
+        let k = meetKey;
+        while (k !== null && k !== undefined) {
+            const [r, c] = k.split(',').map(Number);
+            path.unshift({ type: 'path', r, c });
+            k = prevA.get(k);
+        }
+        k = prevB.get(meetKey);
+        while (k !== null && k !== undefined) {
+            const [r, c] = k.split(',').map(Number);
+            path.push({ type: 'path', r, c });
+            k = prevB.get(k);
+        }
+        return path;
+    },
+
+    /* ==================== MAZE GENERATORS ==================== */
+
+    generateMaze(name, grid) {
+        grid.clearBoard();
+        switch (name) {
+            case 'recursive-division': return this._recursiveDivision(grid, 'both');
+            case 'recursive-vertical': return this._recursiveDivision(grid, 'vertical');
+            case 'recursive-horizontal': return this._recursiveDivision(grid, 'horizontal');
+            case 'random': return this._randomMaze(grid);
+            case 'stair': return this._stairMaze(grid);
+        }
+        return [];
+    },
+
+    /* ---- Recursive Division (clean corridors, no outer border) ---- */
+    _recursiveDivision(grid, skew) {
         const steps = [];
-        if (target === undefined) return steps;
+        const sr = grid.startRow, sc = grid.startCol;
+        const tr = grid.targetRow, tc = grid.targetCol;
+        const _skip = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
 
-        const targetNode = graph.nodes.get(target);
-        if (!targetNode) return steps;
+        const divide = (rMin, rMax, cMin, cMax) => {
+            const h = rMax - rMin;  // height span
+            const w = cMax - cMin;  // width span
+            if (h < 2 || w < 2) return;   // too small to divide
 
-        // Heuristic: Euclidean distance
-        const heuristic = (nodeId) => {
-            const n = graph.nodes.get(nodeId);
-            if (!n) return 0;
-            const dx = n.x - targetNode.x;
-            const dy = n.y - targetNode.y;
-            return Math.sqrt(dx * dx + dy * dy) / 50; // Scale down
+            let horizontal;
+            if (skew === 'vertical') horizontal = Math.random() < 0.15;
+            else if (skew === 'horizontal') horizontal = Math.random() < 0.85;
+            else if (h > w) horizontal = true;
+            else if (w > h) horizontal = false;
+            else horizontal = Math.random() < 0.5;
+
+            if (horizontal) {
+                // Pick wall row (must leave at least 1 row above and below)
+                const wallRow = rMin + 1 + Math.floor(Math.random() * (h - 1));
+                // Pick gap in the wall
+                const gapCol = cMin + Math.floor(Math.random() * (w + 1));
+
+                for (let c = cMin; c <= cMax; c++) {
+                    if (c === gapCol || _skip(wallRow, c)) continue;
+                    steps.push({ type: 'wall', r: wallRow, c });
+                }
+                divide(rMin, wallRow - 1, cMin, cMax);
+                divide(wallRow + 1, rMax, cMin, cMax);
+            } else {
+                const wallCol = cMin + 1 + Math.floor(Math.random() * (w - 1));
+                const gapRow = rMin + Math.floor(Math.random() * (h + 1));
+
+                for (let r = rMin; r <= rMax; r++) {
+                    if (r === gapRow || _skip(r, wallCol)) continue;
+                    steps.push({ type: 'wall', r, c: wallCol });
+                }
+                divide(rMin, rMax, cMin, wallCol - 1);
+                divide(rMin, rMax, wallCol + 1, cMax);
+            }
         };
 
-        const gScore = {};
-        const fScore = {};
-        const prev = {};
-        const openSet = new Set();
-        const closedSet = new Set();
-
-        for (const [id] of graph.nodes) {
-            gScore[id] = Infinity;
-            fScore[id] = Infinity;
-            prev[id] = null;
-        }
-        gScore[source] = 0;
-        fScore[source] = heuristic(source);
-        openSet.add(source);
-
-        steps.push({ type: 'source', node: source });
-        steps.push({ type: 'target', node: target });
-        steps.push({ type: 'distance', node: source, distance: 0 });
-
-        while (openSet.size > 0) {
-            // Find node in openSet with lowest fScore
-            let current = null;
-            let minF = Infinity;
-            for (const n of openSet) {
-                if (fScore[n] < minF) {
-                    minF = fScore[n];
-                    current = n;
-                }
-            }
-
-            if (current === target) {
-                this._reconstructPath(steps, prev, source, target);
-                return steps;
-            }
-
-            openSet.delete(current);
-            closedSet.add(current);
-            steps.push({ type: 'visit', node: current });
-
-            const neighbors = graph.getNeighbors(current);
-            for (const { node: neighbor, weight } of neighbors) {
-                if (closedSet.has(neighbor)) continue;
-                steps.push({ type: 'consider', from: current, to: neighbor });
-
-                const tentativeG = gScore[current] + weight;
-                if (tentativeG < gScore[neighbor]) {
-                    prev[neighbor] = current;
-                    gScore[neighbor] = tentativeG;
-                    fScore[neighbor] = tentativeG + heuristic(neighbor);
-                    steps.push({ type: 'relax', from: current, to: neighbor, distance: Math.round(tentativeG) });
-                    steps.push({ type: 'distance', node: neighbor, distance: Math.round(tentativeG) });
-                    openSet.add(neighbor);
-                    steps.push({ type: 'enqueue', node: neighbor });
-                }
-            }
-            steps.push({ type: 'visited', node: current });
-        }
-
+        divide(0, grid.rows - 1, 0, grid.cols - 1);
         return steps;
     },
 
-    _prim(graph, source) {
+    /* ---- Random Maze ---- */
+    _randomMaze(grid) {
         const steps = [];
-        const inMST = new Set();
-        const edges = [];     // priority queue: [weight, from, to]
-        let totalWeight = 0;
-
-        inMST.add(source);
-        steps.push({ type: 'source', node: source });
-        steps.push({ type: 'visit', node: source });
-
-        // Add edges from source
-        for (const { node: neighbor, weight } of graph.getNeighbors(source)) {
-            edges.push([weight, source, neighbor]);
+        const sr = grid.startRow, sc = grid.startCol;
+        const tr = grid.targetRow, tc = grid.targetCol;
+        for (let r = 0; r < grid.rows; r++) {
+            for (let c = 0; c < grid.cols; c++) {
+                if (r === sr && c === sc) continue;
+                if (r === tr && c === tc) continue;
+                if (Math.random() < 0.28) steps.push({ type: 'wall', r, c });
+            }
         }
+        return steps;
+    },
 
-        while (edges.length > 0 && inMST.size < graph.nodes.size) {
-            edges.sort((a, b) => a[0] - b[0]);
-            const [weight, from, to] = edges.shift();
+    /* ---- Stair Pattern ---- */
+    _stairMaze(grid) {
+        const steps = [];
+        const sr = grid.startRow, sc = grid.startCol;
+        const tr = grid.targetRow, tc = grid.targetCol;
+        const _isSpecial = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
 
-            if (inMST.has(to)) continue;
+        const spacing = 4;
+        let goingDown = true;
 
-            steps.push({ type: 'consider', from, to });
-            inMST.add(to);
-            totalWeight += weight;
-            steps.push({ type: 'mst-add', from, to, weight, totalWeight });
-            steps.push({ type: 'visit', node: to });
-
-            for (const { node: neighbor, weight: w } of graph.getNeighbors(to)) {
-                if (!inMST.has(neighbor)) {
-                    edges.push([w, to, neighbor]);
+        for (let col = spacing; col < grid.cols - spacing; col += spacing) {
+            if (goingDown) {
+                for (let r = 0; r < grid.rows - spacing; r++) {
+                    if (!_isSpecial(r, col)) steps.push({ type: 'wall', r, c: col });
+                }
+            } else {
+                for (let r = spacing; r < grid.rows; r++) {
+                    if (!_isSpecial(r, col)) steps.push({ type: 'wall', r, c: col });
                 }
             }
+            goingDown = !goingDown;
         }
-
         return steps;
-    },
-
-    _kruskal(graph) {
-        const steps = [];
-        const parent = {};
-        const rank = {};
-
-        // Union-Find
-        const find = (x) => {
-            if (parent[x] !== x) parent[x] = find(parent[x]);
-            return parent[x];
-        };
-        const union = (x, y) => {
-            const px = find(x), py = find(y);
-            if (px === py) return false;
-            if (rank[px] < rank[py]) parent[px] = py;
-            else if (rank[px] > rank[py]) parent[py] = px;
-            else { parent[py] = px; rank[px]++; }
-            return true;
-        };
-
-        for (const [id] of graph.nodes) {
-            parent[id] = id;
-            rank[id] = 0;
-        }
-
-        // Sort edges by weight
-        const sortedEdges = [...graph.edges].sort((a, b) => a.weight - b.weight);
-        let totalWeight = 0;
-
-        for (const edge of sortedEdges) {
-            steps.push({ type: 'consider', from: edge.from, to: edge.to });
-            if (union(edge.from, edge.to)) {
-                totalWeight += edge.weight;
-                steps.push({ type: 'mst-add', from: edge.from, to: edge.to, weight: edge.weight, totalWeight });
-            }
-        }
-
-        return steps;
-    },
-
-    _reconstructPath(steps, prev, source, target) {
-        const pathNodes = [];
-        const pathEdges = [];
-        let current = target;
-        while (current !== null && current !== undefined) {
-            pathNodes.unshift(current);
-            if (prev[current] !== null && prev[current] !== undefined) {
-                pathEdges.unshift([prev[current], current]);
-            }
-            if (current === source) break;
-            current = prev[current];
-        }
-        if (pathNodes.length > 0 && pathNodes[0] === source) {
-            steps.push({ type: 'path', nodes: pathNodes, edges: pathEdges });
-        }
     }
 };
 
-window.GraphAlgorithms = GraphAlgorithms;
+window.PathAlgorithms = PathAlgorithms;

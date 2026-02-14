@@ -1,334 +1,115 @@
 /* ============================================
    BINARY TREE VISUALIZATION
-   BST with insert, delete, search, traversals
    ============================================ */
-
 const BinaryTreeViz = {
-    canvas: null,
-    ctx: null,
-    root: null,
-    highlightNode: null,
-    foundNode: null,
-    visitedNodes: new Set(),
-    traversalOrder: [],
+    canvas: null, ctx: null, root: null, highlightNode: null, foundNode: null, visitedNodes: new Set(),
 
     init(canvas) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        this.root = null;
+        this.canvas = canvas; this.ctx = canvas.getContext('2d');
+        this.root = null; this.highlightNode = null; this.foundNode = null; this.visitedNodes = new Set();
         this._resize();
+        this._resizeHandler = () => this._resize();
+        window.addEventListener('resize', this._resizeHandler);
     },
 
     _resize() {
         if (!this.canvas) return;
-        const parent = this.canvas.parentElement;
-        const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = parent.clientWidth * dpr;
-        this.canvas.height = parent.clientHeight * dpr;
-        this.canvas.style.width = parent.clientWidth + 'px';
-        this.canvas.style.height = parent.clientHeight + 'px';
-        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        this.draw();
+        const p = this.canvas.parentElement, dpr = window.devicePixelRatio || 1;
+        this.canvas.width = p.clientWidth * dpr; this.canvas.height = p.clientHeight * dpr;
+        this.canvas.style.width = p.clientWidth + 'px'; this.canvas.style.height = p.clientHeight + 'px';
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.draw();
     },
 
-    _createNode(value) {
-        return { value, left: null, right: null };
-    },
-
-    insert(value) {
-        const steps = [];
-        if (!this.root) {
-            this.root = this._createNode(value);
-            steps.push({ type: 'insert', value, path: [] });
-            steps.push({ type: 'done' });
-            return steps;
-        }
-        let current = this.root;
-        const path = [];
-        while (current) {
-            path.push(current.value);
-            steps.push({ type: 'compare', node: current.value, value });
-            if (value < current.value) {
-                if (!current.left) {
-                    current.left = this._createNode(value);
-                    steps.push({ type: 'insert', value, path: [...path] });
-                    break;
-                }
-                current = current.left;
-            } else if (value > current.value) {
-                if (!current.right) {
-                    current.right = this._createNode(value);
-                    steps.push({ type: 'insert', value, path: [...path] });
-                    break;
-                }
-                current = current.right;
-            } else {
-                // Duplicate
-                steps.push({ type: 'duplicate', value });
-                break;
-            }
-        }
-        steps.push({ type: 'done' });
-        return steps;
-    },
-
-    search(value) {
-        const steps = [];
-        let current = this.root;
-        while (current) {
-            steps.push({ type: 'compare', node: current.value, value });
-            if (value === current.value) {
-                steps.push({ type: 'found', node: current.value });
-                return steps;
-            }
-            if (value < current.value) current = current.left;
-            else current = current.right;
-        }
-        steps.push({ type: 'not-found' });
-        return steps;
-    },
-
-    delete(value) {
-        const steps = [];
-        this.root = this._deleteNode(this.root, value, steps);
-        steps.push({ type: 'done' });
-        return steps;
-    },
-
-    _deleteNode(node, value, steps) {
-        if (!node) {
-            steps.push({ type: 'not-found' });
-            return null;
-        }
-        steps.push({ type: 'compare', node: node.value, value });
-        if (value < node.value) {
-            node.left = this._deleteNode(node.left, value, steps);
-        } else if (value > node.value) {
-            node.right = this._deleteNode(node.right, value, steps);
-        } else {
-            steps.push({ type: 'delete', node: node.value });
-            if (!node.left) return node.right;
-            if (!node.right) return node.left;
-            // Find inorder successor
-            let successor = node.right;
-            while (successor.left) successor = successor.left;
-            steps.push({ type: 'successor', node: successor.value });
-            node.value = successor.value;
-            node.right = this._deleteNode(node.right, successor.value, steps);
-        }
+    _insert(node, val) {
+        if (!node) return { val, left: null, right: null };
+        if (val < node.val) node.left = this._insert(node.left, val);
+        else if (val > node.val) node.right = this._insert(node.right, val);
         return node;
     },
 
-    // Traversals
-    inorder() {
-        const steps = [];
-        this._inorder(this.root, steps);
-        return steps;
-    },
-    _inorder(node, steps) {
-        if (!node) return;
-        this._inorder(node.left, steps);
-        steps.push({ type: 'visit', node: node.value });
-        this._inorder(node.right, steps);
-    },
-
-    preorder() {
-        const steps = [];
-        this._preorder(this.root, steps);
-        return steps;
-    },
-    _preorder(node, steps) {
-        if (!node) return;
-        steps.push({ type: 'visit', node: node.value });
-        this._preorder(node.left, steps);
-        this._preorder(node.right, steps);
-    },
-
-    postorder() {
-        const steps = [];
-        this._postorder(this.root, steps);
-        return steps;
-    },
-    _postorder(node, steps) {
-        if (!node) return;
-        this._postorder(node.left, steps);
-        this._postorder(node.right, steps);
-        steps.push({ type: 'visit', node: node.value });
-    },
-
-    levelorder() {
-        const steps = [];
-        if (!this.root) return steps;
-        const queue = [this.root];
-        while (queue.length > 0) {
-            const node = queue.shift();
-            steps.push({ type: 'visit', node: node.value });
-            if (node.left) queue.push(node.left);
-            if (node.right) queue.push(node.right);
+    _delete(node, val) {
+        if (!node) return null;
+        if (val < node.val) node.left = this._delete(node.left, val);
+        else if (val > node.val) node.right = this._delete(node.right, val);
+        else {
+            if (!node.left) return node.right;
+            if (!node.right) return node.left;
+            let min = node.right; while (min.left) min = min.left;
+            node.val = min.val; node.right = this._delete(node.right, min.val);
         }
-        return steps;
+        return node;
     },
 
     applyStep(step) {
-        this.highlightNode = null;
-        this.foundNode = null;
         switch (step.type) {
-            case 'compare':
-                this.highlightNode = step.node;
-                break;
-            case 'found':
-            case 'successor':
-                this.foundNode = step.node;
-                break;
-            case 'visit':
-                this.visitedNodes.add(step.node);
-                this.highlightNode = step.node;
-                this.traversalOrder.push(step.node);
-                break;
-            case 'insert':
-            case 'delete':
-                this.highlightNode = step.value || step.node;
-                break;
+            case 'visit': this.highlightNode = step.value; this.visitedNodes.add(step.value); break;
+            case 'found': this.foundNode = step.value; this.highlightNode = null; break;
+            case 'not-found': this.highlightNode = null; break;
+            case 'insert-done': this.root = this._insert(this.root, step.value); break;
+            case 'delete-done': this.root = this._delete(this.root, step.value); break;
         }
         this.draw();
     },
 
-    resetHighlights() {
-        this.highlightNode = null;
-        this.foundNode = null;
-        this.visitedNodes.clear();
-        this.traversalOrder = [];
-        this.draw();
+    reset() { this.highlightNode = null; this.foundNode = null; this.visitedNodes = new Set(); },
+    resetHighlights() { this.highlightNode = null; this.foundNode = null; this.visitedNodes = new Set(); this.draw(); },
+
+    insert(val) { const s = []; this._searchSteps(this.root, val, s); s.push({ type: 'insert-done', value: val }); return s; },
+    delete(val) { const s = []; this._searchSteps(this.root, val, s); s.push({ type: 'delete-done', value: val }); return s; },
+    search(val) { const s = []; this._searchSteps(this.root, val, s); const found = this._find(this.root, val); s.push(found ? { type: 'found', value: val } : { type: 'not-found' }); return s; },
+
+    _find(node, val) { if (!node) return false; if (val === node.val) return true; return val < node.val ? this._find(node.left, val) : this._find(node.right, val); },
+    _searchSteps(node, val, s) { if (!node) return; s.push({ type: 'visit', value: node.val }); if (val < node.val) this._searchSteps(node.left, val, s); else if (val > node.val) this._searchSteps(node.right, val, s); },
+
+    inorder() { const s = []; this._inorder(this.root, s); return s; },
+    _inorder(node, s) { if (!node) return; this._inorder(node.left, s); s.push({ type: 'visit', value: node.val }); this._inorder(node.right, s); },
+    preorder() { const s = []; this._preorder(this.root, s); return s; },
+    _preorder(node, s) { if (!node) return; s.push({ type: 'visit', value: node.val }); this._preorder(node.left, s); this._preorder(node.right, s); },
+    postorder() { const s = []; this._postorder(this.root, s); return s; },
+    _postorder(node, s) { if (!node) return; this._postorder(node.left, s); this._postorder(node.right, s); s.push({ type: 'visit', value: node.val }); },
+    levelorder() {
+        if (!this.root) return [];
+        const s = [], q = [this.root];
+        while (q.length) { const n = q.shift(); s.push({ type: 'visit', value: n.val }); if (n.left) q.push(n.left); if (n.right) q.push(n.right); }
+        return s;
     },
 
-    clear() {
-        this.root = null;
-        this.resetHighlights();
-    },
+    buildSample() { this.root = null;[50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45].forEach(v => this.root = this._insert(this.root, v)); this.draw(); },
+    clear() { this.root = null; this.highlightNode = null; this.foundNode = null; this.visitedNodes = new Set(); this.draw(); },
 
-    buildSample() {
-        this.clear();
-        [50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45].forEach(v => {
-            // Direct insert without steps
-            this.root = this._directInsert(this.root, v);
-        });
-        this.draw();
-    },
-
-    _directInsert(node, value) {
-        if (!node) return this._createNode(value);
-        if (value < node.value) node.left = this._directInsert(node.left, value);
-        else if (value > node.value) node.right = this._directInsert(node.right, value);
-        return node;
+    _calcPositions(node, depth, x, dx) {
+        if (!node) return [];
+        const pos = [{ val: node.val, x, y: 50 + depth * 70, left: node.left, right: node.right }];
+        return pos.concat(this._calcPositions(node.left, depth + 1, x - dx, dx / 2), this._calcPositions(node.right, depth + 1, x + dx, dx / 2));
     },
 
     draw() {
         if (!this.ctx) return;
-        const ctx = this.ctx;
-        const w = this.canvas.width / (window.devicePixelRatio || 1);
-        const h = this.canvas.height / (window.devicePixelRatio || 1);
+        const ctx = this.ctx, w = this.canvas.width / (window.devicePixelRatio || 1), h = this.canvas.height / (window.devicePixelRatio || 1);
         ctx.clearRect(0, 0, w, h);
+        if (!this.root) { ctx.fillStyle = '#90A4AE'; ctx.font = "14px 'Space Mono', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Empty BST — insert some values!', w / 2, h / 2); return; }
 
-        if (!this.root) {
-            ctx.fillStyle = '#888';
-            ctx.font = "bold 14px 'Space Mono', monospace";
-            ctx.textAlign = 'center';
-            ctx.fillText('Empty tree — insert some values!', w / 2, h / 2);
-            return;
+        const nodes = this._calcPositions(this.root, 0, w / 2, w / 5);
+        const nodeMap = {}; nodes.forEach(n => nodeMap[n.val] = n);
+
+        for (const n of nodes) {
+            if (n.left) { const c = nodeMap[n.left.val]; if (c) { ctx.strokeStyle = '#B0BEC5'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(c.x, c.y); ctx.stroke(); } }
+            if (n.right) { const c = nodeMap[n.right.val]; if (c) { ctx.strokeStyle = '#B0BEC5'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(c.x, c.y); ctx.stroke(); } }
         }
 
-        // Calculate positions
-        const positions = new Map();
-        this._calcPositions(this.root, w / 2, 50, w / 4, positions);
-
-        // Draw edges first
-        this._drawEdges(ctx, this.root, positions);
-
-        // Draw nodes
-        this._drawNodes(ctx, this.root, positions);
-
-        // Draw traversal order
-        if (this.traversalOrder.length > 0) {
-            ctx.fillStyle = '#845EC2';
-            ctx.font = "bold 12px 'Space Mono', monospace";
-            ctx.textAlign = 'left';
-            ctx.fillText('Order: ' + this.traversalOrder.join(' → '), 20, h - 20);
+        const R = 20;
+        for (const n of nodes) {
+            let fill = '#FFFFFF';
+            if (this.visitedNodes.has(n.val)) fill = '#A8E6CF';
+            if (n.val === this.highlightNode) fill = '#FFE66D';
+            if (n.val === this.foundNode) fill = '#4ECDC4';
+            ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(n.x, n.y, R, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5; ctx.stroke();
+            ctx.fillStyle = '#1A1A1A'; ctx.font = "bold 13px 'Space Mono', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(n.val, n.x, n.y);
         }
     },
 
-    _calcPositions(node, x, y, spread, positions) {
-        if (!node) return;
-        positions.set(node.value, { x, y });
-        this._calcPositions(node.left, x - spread, y + 70, spread / 2, positions);
-        this._calcPositions(node.right, x + spread, y + 70, spread / 2, positions);
-    },
-
-    _drawEdges(ctx, node, positions) {
-        if (!node) return;
-        const pos = positions.get(node.value);
-        if (node.left) {
-            const leftPos = positions.get(node.left.value);
-            ctx.strokeStyle = '#1A1A1A';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y + 20);
-            ctx.lineTo(leftPos.x, leftPos.y - 20);
-            ctx.stroke();
-            this._drawEdges(ctx, node.left, positions);
-        }
-        if (node.right) {
-            const rightPos = positions.get(node.right.value);
-            ctx.strokeStyle = '#1A1A1A';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y + 20);
-            ctx.lineTo(rightPos.x, rightPos.y - 20);
-            ctx.stroke();
-            this._drawEdges(ctx, node.right, positions);
-        }
-    },
-
-    _drawNodes(ctx, node, positions) {
-        if (!node) return;
-        const pos = positions.get(node.value);
-        const r = 22;
-
-        let bgColor = '#fff';
-        if (this.visitedNodes.has(node.value)) bgColor = '#4ECDC4';
-        if (node.value === this.highlightNode) bgColor = '#FFE66D';
-        if (node.value === this.foundNode) bgColor = '#A8E6CF';
-
-        // Shadow
-        ctx.fillStyle = '#1A1A1A';
-        ctx.beginPath();
-        ctx.arc(pos.x + 3, pos.y + 3, r, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Circle
-        ctx.fillStyle = bgColor;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#1A1A1A';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Value
-        ctx.fillStyle = '#1A1A1A';
-        ctx.font = "bold 14px 'Space Mono', monospace";
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(node.value, pos.x, pos.y);
-
-        this._drawNodes(ctx, node.left, positions);
-        this._drawNodes(ctx, node.right, positions);
-    },
-
-    destroy() {
-        this.canvas = null;
-        this.ctx = null;
-        this.root = null;
-    }
+    destroy() { if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler); this.canvas = null; this.ctx = null; }
 };
-
 window.BinaryTreeViz = BinaryTreeViz;

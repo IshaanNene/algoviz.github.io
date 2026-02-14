@@ -1,249 +1,169 @@
 /* ============================================
-   GRAPH RENDERER
-   Canvas renderer for graph visualization
+   GRID RENDERER — Pathfinding grid canvas
+   Uses the neobrutalist color palette
    ============================================ */
+const GridRenderer = {
+    canvas: null, ctx: null, grid: null,
+    cellSize: 25, resizeHandler: null,
 
-const GraphRenderer = {
-    canvas: null,
-    ctx: null,
-    graph: null,
-    nodeStates: {},   // nodeId -> 'unvisited'|'visiting'|'visited'|'path'|'source'|'target'
-    edgeStates: {},   // 'from-to' -> 'default'|'relaxed'|'mst'|'path'
-    distances: {},    // nodeId -> distance label
-    edgeStartNode: null, // For drawing edge-in-progress line
+    /* Neobrutalist palette — matches sorting/DS visualizations */
+    colors: {
+        bg: '#FFFFFF',
+        gridFine: 'rgba(100, 181, 246, 0.25)',
+        gridMaj: 'rgba(66, 165, 245, 0.45)',
+        wall: '#1A1A1A',
+        start: '#4ECDC4',   // --teal
+        target: '#FF6B6B',   // --red
+        visited: '#A8E6CF',   // --green  (same as linked list "visited")
+        visiting: '#845EC2',   // --purple (same as linked list "found")
+        path: '#FFE66D',   // --yellow (same as sorting "compare")
+        weight: '#FFA552',   // --orange
+    },
 
-    init(canvas, graph) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        this.graph = graph;
-        this.nodeStates = {};
-        this.edgeStates = {};
-        this.distances = {};
+    init(canvas, grid) {
+        this.canvas = canvas; this.ctx = canvas.getContext('2d');
+        this.grid = grid;
         this._resize();
-        this._resizeHandler = () => this._resize();
-        window.addEventListener('resize', this._resizeHandler);
+        this.resizeHandler = () => this._resize();
+        window.addEventListener('resize', this.resizeHandler);
     },
 
     _resize() {
-        if (!this.canvas) return;
-        const parent = this.canvas.parentElement;
+        if (!this.canvas || !this.grid) return;
+        const p = this.canvas.parentElement;
         const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = parent.clientWidth * dpr;
-        this.canvas.height = parent.clientHeight * dpr;
-        this.canvas.style.width = parent.clientWidth + 'px';
-        this.canvas.style.height = parent.clientHeight + 'px';
+        const w = p.clientWidth, h = p.clientHeight;
+
+        this.cellSize = Math.floor(Math.min(w / this.grid.cols, h / this.grid.rows));
+        if (this.cellSize < 10) this.cellSize = 10;
+
+        const newCols = Math.floor(w / this.cellSize);
+        const newRows = Math.floor(h / this.cellSize);
+        if (newRows !== this.grid.rows || newCols !== this.grid.cols) {
+            this.grid.resize(Math.max(newRows, 5), Math.max(newCols, 10));
+        }
+
+        this.canvas.width = w * dpr; this.canvas.height = h * dpr;
+        this.canvas.style.width = w + 'px'; this.canvas.style.height = h + 'px';
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         this.draw();
     },
 
-    resetStates() {
-        this.nodeStates = {};
-        this.edgeStates = {};
-        this.distances = {};
-        this.draw();
-    },
-
     applyStep(step) {
+        if (!this.grid) return;
         switch (step.type) {
-            case 'visit':
-                this.nodeStates[step.node] = 'visiting';
-                break;
-            case 'visited':
-                this.nodeStates[step.node] = 'visited';
-                break;
-            case 'enqueue':
-            case 'push':
-                this.nodeStates[step.node] = 'visiting';
-                break;
-            case 'relax':
-                this.edgeStates[`${step.from}-${step.to}`] = 'relaxed';
-                if (!this.graph.directed) {
-                    this.edgeStates[`${step.to}-${step.from}`] = 'relaxed';
-                }
-                if (step.distance !== undefined) {
-                    this.distances[step.to] = step.distance;
-                }
-                break;
-            case 'mst-add':
-                this.edgeStates[`${step.from}-${step.to}`] = 'mst';
-                if (!this.graph.directed) {
-                    this.edgeStates[`${step.to}-${step.from}`] = 'mst';
-                }
-                this.nodeStates[step.from] = 'visited';
-                this.nodeStates[step.to] = 'visited';
-                break;
-            case 'path':
-                if (step.nodes) {
-                    step.nodes.forEach(n => { this.nodeStates[n] = 'path'; });
-                }
-                if (step.edges) {
-                    step.edges.forEach(([f, t]) => {
-                        this.edgeStates[`${f}-${t}`] = 'path';
-                        if (!this.graph.directed) this.edgeStates[`${t}-${f}`] = 'path';
-                    });
-                }
-                break;
-            case 'source':
-                this.nodeStates[step.node] = 'source';
-                break;
-            case 'target':
-                this.nodeStates[step.node] = 'target';
-                break;
-            case 'distance':
-                this.distances[step.node] = step.distance;
-                break;
-            case 'consider':
-                this.edgeStates[`${step.from}-${step.to}`] = 'relaxed';
-                if (!this.graph.directed) this.edgeStates[`${step.to}-${step.from}`] = 'relaxed';
-                break;
+            case 'visit': this.grid.vis[step.r][step.c] = VIS.VISITED; break;
+            case 'visiting': this.grid.vis[step.r][step.c] = VIS.VISITING; break;
+            case 'path': this.grid.vis[step.r][step.c] = VIS.PATH; break;
+            case 'wall': this.grid.setWall(step.r, step.c); break;
+            case 'clear-cell': this.grid.clearCell(step.r, step.c); break;
         }
         this.draw();
     },
 
-    _getNodeColor(state) {
-        switch (state) {
-            case 'visiting': return '#FFE66D';
-            case 'visited': return '#4ECDC4';
-            case 'path': return '#FF6B6B';
-            case 'source': return '#A8E6CF';
-            case 'target': return '#FF8B94';
-            default: return '#FFFFFF';
-        }
-    },
+    reset() { if (this.grid) this.grid.clearPath(); this.draw(); },
+    resetHighlights() { this.reset(); },
 
-    _getEdgeColor(state) {
-        switch (state) {
-            case 'relaxed': return '#845EC2';
-            case 'mst': return '#4ECDC4';
-            case 'path': return '#FF6B6B';
-            default: return '#1A1A1A';
-        }
-    },
-
-    _getEdgeWidth(state) {
-        switch (state) {
-            case 'relaxed': return 3;
-            case 'mst': return 4;
-            case 'path': return 5;
-            default: return 2;
-        }
+    _cellColor(r, c) {
+        const cell = this.grid.cells[r][c];
+        const vis = this.grid.vis[r][c];
+        if (cell === CELL.START) return this.colors.start;
+        if (cell === CELL.TARGET) return this.colors.target;
+        if (cell === CELL.WALL) return this.colors.wall;
+        if (cell === CELL.WEIGHT) return this.colors.weight;
+        if (vis === VIS.PATH) return this.colors.path;
+        if (vis === VIS.VISITED) return this.colors.visited;
+        if (vis === VIS.VISITING) return this.colors.visiting;
+        return null; // transparent/bg
     },
 
     draw() {
-        if (!this.ctx || !this.graph) return;
-        const ctx = this.ctx;
-        const w = this.canvas.width / (window.devicePixelRatio || 1);
-        const h = this.canvas.height / (window.devicePixelRatio || 1);
+        if (!this.ctx || !this.grid) return;
+        const ctx = this.ctx, g = this.grid, cs = this.cellSize;
+        const pw = g.cols * cs, ph = g.rows * cs;
+        const cw = this.canvas.width / (window.devicePixelRatio || 1);
+        const ch = this.canvas.height / (window.devicePixelRatio || 1);
 
-        ctx.clearRect(0, 0, w, h);
+        // White background
+        ctx.fillStyle = this.colors.bg;
+        ctx.fillRect(0, 0, cw, ch);
 
-        // Draw grid dots
-        ctx.fillStyle = '#e0e0e0';
-        for (let x = 20; x < w; x += 40) {
-            for (let y = 20; y < h; y += 40) {
-                ctx.beginPath();
-                ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-                ctx.fill();
+        // Draw filled cells
+        for (let r = 0; r < g.rows; r++) {
+            for (let c = 0; c < g.cols; c++) {
+                const color = this._cellColor(r, c);
+                if (color) {
+                    ctx.fillStyle = color;
+                    ctx.fillRect(c * cs, r * cs, cs, cs);
+
+                    // Add neobrutalist inner shadow to walls
+                    if (g.cells[r][c] === CELL.WALL) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+                        ctx.fillRect(c * cs, r * cs, cs, 2);
+                        ctx.fillRect(c * cs, r * cs, 2, cs);
+                    }
+                }
             }
         }
 
-        // Draw edges
-        for (const edge of this.graph.edges) {
-            const from = this.graph.nodes.get(edge.from);
-            const to = this.graph.nodes.get(edge.to);
-            if (!from || !to) continue;
+        // Fine grid lines
+        ctx.strokeStyle = this.colors.gridFine;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        for (let c = 0; c <= g.cols; c++) { ctx.moveTo(c * cs, 0); ctx.lineTo(c * cs, ph); }
+        for (let r = 0; r <= g.rows; r++) { ctx.moveTo(0, r * cs); ctx.lineTo(pw, r * cs); }
+        ctx.stroke();
 
-            const key = `${edge.from}-${edge.to}`;
-            const state = this.edgeStates[key] || 'default';
-            const color = this._getEdgeColor(state);
-            const width = this._getEdgeWidth(state);
+        // Major grid lines (every 5th)
+        ctx.strokeStyle = this.colors.gridMaj;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let c = 0; c <= g.cols; c += 5) { ctx.moveTo(c * cs, 0); ctx.lineTo(c * cs, ph); }
+        for (let r = 0; r <= g.rows; r += 5) { ctx.moveTo(0, r * cs); ctx.lineTo(pw, r * cs); }
+        ctx.stroke();
 
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(to.x, to.y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.stroke();
+        // Start icon — bold chevron
+        this._drawStartIcon(g.startRow, g.startCol, cs);
+        // Target icon — bullseye
+        this._drawTargetIcon(g.targetRow, g.targetCol, cs);
 
-            // Weight label
-            const mx = (from.x + to.x) / 2;
-            const my = (from.y + to.y) / 2;
-
-            // Background for weight
-            ctx.fillStyle = '#FFFFFF';
-            ctx.strokeStyle = '#1A1A1A';
-            ctx.lineWidth = 2;
-            const wText = String(edge.weight);
-            const tw = ctx.measureText(wText).width;
-            ctx.fillRect(mx - tw / 2 - 6, my - 10, tw + 12, 20);
-            ctx.strokeRect(mx - tw / 2 - 6, my - 10, tw + 12, 20);
-
-            ctx.fillStyle = '#1A1A1A';
-            ctx.font = "bold 11px 'Space Mono', monospace";
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(wText, mx, my);
-        }
-
-        // Draw edge in-progress
-        if (GraphEditor && GraphEditor.edgeStartNode !== null) {
-            const startNode = this.graph.nodes.get(GraphEditor.edgeStartNode);
-            if (startNode) {
-                ctx.beginPath();
-                ctx.moveTo(startNode.x, startNode.y);
-                ctx.lineTo(GraphEditor.mousePos.x, GraphEditor.mousePos.y);
-                ctx.strokeStyle = '#845EC2';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-        }
-
-        // Draw nodes
-        const nodeRadius = 22;
-        for (const [id, node] of this.graph.nodes) {
-            const state = this.nodeStates[id];
-            const color = this._getNodeColor(state);
-
-            // Shadow
-            ctx.fillStyle = '#1A1A1A';
-            ctx.beginPath();
-            ctx.arc(node.x + 3, node.y + 3, nodeRadius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Node circle
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#1A1A1A';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Label
-            ctx.fillStyle = '#1A1A1A';
+        // Subtle prompt
+        const hasVis = g.vis.some(row => row.some(v => v !== 0));
+        const hasWalls = g.cells.some(row => row.some(v => v === CELL.WALL));
+        if (!hasVis && !hasWalls) {
+            ctx.fillStyle = 'rgba(100, 130, 160, 0.45)';
             ctx.font = "bold 13px 'Space Mono', monospace";
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(node.label, node.x, node.y);
-
-            // Distance label (for shortest path algos)
-            if (this.distances[id] !== undefined) {
-                const dist = this.distances[id] === Infinity ? '∞' : String(this.distances[id]);
-                ctx.fillStyle = '#845EC2';
-                ctx.font = "bold 10px 'Space Mono', monospace";
-                ctx.fillText('d=' + dist, node.x, node.y + nodeRadius + 14);
-            }
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('Pick an algorithm and visualize it!', pw / 2, 18);
         }
     },
 
+    _drawStartIcon(r, c, cs) {
+        const ctx = this.ctx;
+        const cx = c * cs + cs / 2, cy = r * cs + cs / 2;
+        const s = cs * 0.32;
+        ctx.fillStyle = '#1A1A1A';
+        ctx.beginPath();
+        ctx.moveTo(cx - s * 0.5, cy - s);
+        ctx.lineTo(cx + s, cy);
+        ctx.lineTo(cx - s * 0.5, cy + s);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    _drawTargetIcon(r, c, cs) {
+        const ctx = this.ctx;
+        const cx = c * cs + cs / 2, cy = r * cs + cs / 2;
+        const s = cs * 0.35;
+        ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#1A1A1A';
+        ctx.beginPath(); ctx.arc(cx, cy, s * 0.4, 0, Math.PI * 2); ctx.fill();
+    },
+
     destroy() {
-        if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
-        this.canvas = null;
-        this.ctx = null;
-        this.graph = null;
+        if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
+        this.canvas = null; this.ctx = null; this.grid = null;
     }
 };
-
-window.GraphRenderer = GraphRenderer;
+window.GridRenderer = GridRenderer;
