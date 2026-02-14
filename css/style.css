@@ -635,6 +635,16 @@ body {
   border: 2px solid var(--border);
 }
 
+.noscript-warning {
+  padding: 40px;
+  text-align: center;
+  font-family: monospace;
+  font-size: 1.2rem;
+  background: var(--yellow);
+  border: 3px solid var(--border);
+  margin: 20px;
+}
+
 .hidden {
   display: none !important;
 }
@@ -819,6 +829,7 @@ body {
    ACCESSIBILITY — REDUCED MOTION
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
