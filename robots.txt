@@ -1,4 +1,0 @@
-# AlgoViz — robots.txt
-User-agent: *
-Allow: /
-Sitemap: https://ishaannene.github.io/algoviz.github.io/sitemap.xml
