@@ -62,39 +62,13 @@ jobs:
 
       - name: Bundle & Minify JS
         run: |
-          # Build order matters — engine first, then modules, then app
-          npx esbuild \
-            js/engine.js \
-            js/sorting/algorithms.js js/sorting/renderer.js js/sorting/view.js \
-            js/graph/graph.js js/graph/editor.js js/graph/renderer.js js/graph/algorithms.js js/graph/view.js \
-            js/ds/linked-list.js js/ds/stack-queue.js js/ds/binary-tree.js js/ds/heap.js js/ds/view.js \
-            js/app.js \
-            --bundle=false --minify --outdir=js/min --log-level=info
-          # Concatenate in correct order
-          cat js/min/engine.js \
-              js/min/algorithms.js js/min/renderer.js js/min/view.js \
-              js/min/graph.js js/min/editor.js js/min/renderer2.js js/min/algorithms2.js js/min/view2.js \
-              js/min/linked-list.js js/min/stack-queue.js js/min/binary-tree.js js/min/heap.js js/min/view3.js \
-              js/min/app.js \
-              > js/app.min.js 2>/dev/null || true
-          # Fallback: if concatenation naming doesn't match, just concat all minified files in order
-          if [ ! -s js/app.min.js ]; then
-            npx esbuild \
-              js/engine.js \
+          # Concatenate all JS in correct dependency order, then minify
+          cat js/engine.js \
               js/sorting/algorithms.js js/sorting/renderer.js js/sorting/view.js \
               js/graph/graph.js js/graph/editor.js js/graph/renderer.js js/graph/algorithms.js js/graph/view.js \
               js/ds/linked-list.js js/ds/stack-queue.js js/ds/binary-tree.js js/ds/heap.js js/ds/view.js \
               js/app.js \
-              --bundle=false --minify --outfile=js/app.min.js 2>/dev/null || \
-            # Ultimate fallback: minify each and concatenate
-            for f in js/engine.js \
-                     js/sorting/algorithms.js js/sorting/renderer.js js/sorting/view.js \
-                     js/graph/graph.js js/graph/editor.js js/graph/renderer.js js/graph/algorithms.js js/graph/view.js \
-                     js/ds/linked-list.js js/ds/stack-queue.js js/ds/binary-tree.js js/ds/heap.js js/ds/view.js \
-                     js/app.js; do
-              npx esbuild "$f" --minify >> js/app.min.js
-            done
-          fi
+            | npx esbuild --minify --outfile=js/app.min.js
           echo "::notice::JS bundled: $(cat js/engine.js js/sorting/*.js js/graph/*.js js/ds/*.js js/app.js | wc -c) → $(wc -c < js/app.min.js) bytes"
 
       - name: Prepare build output
