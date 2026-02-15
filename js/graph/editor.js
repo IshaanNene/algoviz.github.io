@@ -4,13 +4,13 @@
 const GridEditor = {
     canvas: null, grid: null, renderer: null,
     isDrawing: false, drawMode: 'wall', // 'wall' | 'erase'
-    draggingStart: false, draggingTarget: false,
+    draggingStart: false, draggingTarget: false, draggingBomb: false,
     onUpdate: null,
 
     init(canvas, grid, renderer, onUpdate) {
         this.canvas = canvas; this.grid = grid;
         this.renderer = renderer; this.onUpdate = onUpdate;
-        this.isDrawing = false; this.draggingStart = false; this.draggingTarget = false;
+        this.isDrawing = false; this.draggingStart = false; this.draggingTarget = false; this.draggingBomb = false;
 
         this._onDown = (e) => this._handleDown(e);
         this._onMove = (e) => this._handleMove(e);
@@ -36,6 +36,7 @@ const GridEditor = {
         const cell = this.grid.cells[r][c];
         if (cell === CELL.START) { this.draggingStart = true; return; }
         if (cell === CELL.TARGET) { this.draggingTarget = true; return; }
+        if (cell === CELL.BOMB) { this.draggingBomb = true; return; }
 
         this.isDrawing = true;
         this.drawMode = cell === CELL.WALL ? 'erase' : 'wall';
@@ -54,6 +55,9 @@ const GridEditor = {
         if (this.draggingTarget) {
             this.grid.moveTarget(r, c); this._update(); return;
         }
+        if (this.draggingBomb) {
+            this.grid.moveBomb(r, c); this._update(); return;
+        }
         if (this.isDrawing) {
             if (this.drawMode === 'wall') this.grid.setWall(r, c);
             else this.grid.clearCell(r, c);
@@ -62,7 +66,7 @@ const GridEditor = {
     },
 
     _handleUp() {
-        this.isDrawing = false; this.draggingStart = false; this.draggingTarget = false;
+        this.isDrawing = false; this.draggingStart = false; this.draggingTarget = false; this.draggingBomb = false;
     },
 
     _update() { if (this.onUpdate) this.onUpdate(); },

@@ -18,6 +18,7 @@ const GridRenderer = {
         visiting: '#845EC2',   // --purple (same as linked list "found")
         path: '#FFE66D',   // --yellow (same as sorting "compare")
         weight: '#FFA552',   // --orange
+        bomb: '#FF8B94',     // pink bomb waypoint
     },
 
     init(canvas, grid) {
@@ -70,6 +71,7 @@ const GridRenderer = {
         if (cell === CELL.START) return this.colors.start;
         if (cell === CELL.TARGET) return this.colors.target;
         if (cell === CELL.WALL) return this.colors.wall;
+        if (cell === CELL.BOMB) return this.colors.bomb;
         if (cell === CELL.WEIGHT) return this.colors.weight;
         if (vis === VIS.PATH) return this.colors.path;
         if (vis === VIS.VISITED) return this.colors.visited;
@@ -126,6 +128,8 @@ const GridRenderer = {
         this._drawStartIcon(g.startRow, g.startCol, cs);
         // Target icon — bullseye
         this._drawTargetIcon(g.targetRow, g.targetCol, cs);
+        // Bomb icon
+        if (g.bombRow !== null) this._drawBombIcon(g.bombRow, g.bombCol, cs);
 
         // Subtle prompt
         const hasVis = g.vis.some(row => row.some(v => v !== 0));
@@ -159,6 +163,26 @@ const GridRenderer = {
         ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = '#1A1A1A';
         ctx.beginPath(); ctx.arc(cx, cy, s * 0.4, 0, Math.PI * 2); ctx.fill();
+    },
+
+    _drawBombIcon(r, c, cs) {
+        const ctx = this.ctx;
+        const cx = c * cs + cs / 2, cy = r * cs + cs / 2;
+        const s = cs * 0.3;
+        // Body circle
+        ctx.fillStyle = '#1A1A1A';
+        ctx.beginPath(); ctx.arc(cx, cy + s * 0.1, s, 0, Math.PI * 2); ctx.fill();
+        // Fuse line
+        ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx + s * 0.5, cy - s * 0.6);
+        ctx.quadraticCurveTo(cx + s * 0.8, cy - s * 1.2, cx + s * 0.2, cy - s * 1.3);
+        ctx.stroke();
+        // Spark
+        ctx.fillStyle = '#FFE66D';
+        ctx.beginPath(); ctx.arc(cx + s * 0.2, cy - s * 1.3, s * 0.2, 0, Math.PI * 2); ctx.fill();
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.arc(cx - s * 0.25, cy - s * 0.1, s * 0.2, 0, Math.PI * 2); ctx.fill();
     },
 
     destroy() {

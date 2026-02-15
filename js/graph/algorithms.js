@@ -24,6 +24,14 @@ const PathAlgorithms = {
     /* ==================== PATHFINDING ==================== */
 
     run(name, grid) {
+        // If bomb node exists, run two-phase: Start→Bomb, then Bomb→Target
+        if (grid.bombRow !== null) {
+            return this._runWithBomb(name, grid);
+        }
+        return this._runSingle(name, grid);
+    },
+
+    _runSingle(name, grid) {
         switch (name) {
             case 'dijkstra': return this._dijkstra(grid);
             case 'astar': return this._astar(grid);
@@ -34,6 +42,41 @@ const PathAlgorithms = {
             case 'bidirectional': return this._bidirectional(grid);
         }
         return { visited: [], path: [] };
+    },
+
+    _runWithBomb(name, grid) {
+        // Phase 1: Start → Bomb
+        const origTarget = { r: grid.targetRow, c: grid.targetCol };
+        grid.cells[grid.targetRow][grid.targetCol] = CELL.EMPTY;
+        grid.targetRow = grid.bombRow; grid.targetCol = grid.bombCol;
+        grid.cells[grid.bombRow][grid.bombCol] = CELL.TARGET;
+
+        const phase1 = this._runSingle(name, grid);
+
+        // Restore bomb, set start to bomb for phase 2
+        grid.cells[grid.bombRow][grid.bombCol] = CELL.BOMB;
+        grid.targetRow = origTarget.r; grid.targetCol = origTarget.c;
+        grid.cells[origTarget.r][origTarget.c] = CELL.TARGET;
+
+        if (phase1.path.length === 0) return phase1; // No route to bomb
+
+        // Phase 2: Bomb → Target
+        const origStart = { r: grid.startRow, c: grid.startCol };
+        grid.cells[grid.startRow][grid.startCol] = CELL.EMPTY;
+        grid.startRow = grid.bombRow; grid.startCol = grid.bombCol;
+        grid.cells[grid.bombRow][grid.bombCol] = CELL.START;
+
+        const phase2 = this._runSingle(name, grid);
+
+        // Restore everything
+        grid.cells[grid.bombRow][grid.bombCol] = CELL.BOMB;
+        grid.startRow = origStart.r; grid.startCol = origStart.c;
+        grid.cells[origStart.r][origStart.c] = CELL.START;
+
+        return {
+            visited: [...phase1.visited, ...phase2.visited],
+            path: [...phase1.path, ...phase2.path]
+        };
     },
 
     /* ---- BFS ---- */

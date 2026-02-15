@@ -13,6 +13,8 @@
     href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
@@ -43,6 +45,10 @@
         <a href="#compare" class="nav-item" data-route="compare">
           <span class="nav-icon">⚡</span>
           <span class="nav-label">Compare</span>
+        </a>
+        <a href="#map" class="nav-item" data-route="map">
+          <span class="nav-icon">🗺️</span>
+          <span class="nav-label">Map</span>
         </a>
       </nav>
       <div class="sidebar-footer">
@@ -83,6 +89,7 @@
   <script src="js/searching/renderer.js"></script>
   <script src="js/searching/view.js"></script>
   <script src="js/comparison/view.js"></script>
+  <script src="js/map/view.js"></script>
   <script src="js/app.js"></script>
 </body>
 

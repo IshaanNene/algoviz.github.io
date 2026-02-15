@@ -837,3 +837,40 @@ body {
   background: var(--green);
   font-weight: 700;
 }
+
+/* --- Map View --- */
+.map-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 400px;
+  border: var(--border-width) solid var(--border);
+  z-index: 0;
+}
+
+.map-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  box-shadow: var(--shadow-sm);
+}
+
+.start-pin {
+  background: #4ECDC4;
+}
+
+.end-pin {
+  background: #FF6B6B;
+}

@@ -40,6 +40,8 @@ const GraphView = {
           <button id="graph-clear-walls" class="brutal-btn small">Clear Walls</button>
           <button id="graph-clear-path" class="brutal-btn small">Clear Path</button>
           <div class="toolbar-separator"></div>
+          <button id="graph-bomb-toggle" class="brutal-btn small">💣 Add Bomb</button>
+          <div class="toolbar-separator"></div>
           <span class="brutal-label" style="margin:0">Speed</span>
           <select id="graph-speed" class="brutal-select" style="font-size:0.65rem">
             <option value="slow">Slow</option>
@@ -59,6 +61,7 @@ const GraphView = {
           <div class="legend-item"><div class="legend-color" style="background:#845EC2;color:#fff"></div><span>Frontier</span></div>
           <div class="legend-item"><div class="legend-color" style="background:#FFE66D"></div><span>Shortest Path</span></div>
           <div class="legend-item"><div class="legend-color" style="background:#1A1A1A"></div><span>Wall</span></div>
+          <div class="legend-item"><div class="legend-color" style="background:#FF8B94"></div><span>Bomb Node</span></div>
         </div>
         <div class="canvas-container"><canvas id="graph-canvas"></canvas></div>
       </div>`;
@@ -145,6 +148,19 @@ const GraphView = {
     document.getElementById('graph-clear-path').addEventListener('click', () => {
       if (this.isAnimating) { this.engine.stop(); this.isAnimating = false; this._disableControls(false); }
       this.grid.clearPath(); GridRenderer.draw();
+    });
+
+    // Bomb toggle
+    document.getElementById('graph-bomb-toggle').addEventListener('click', () => {
+      if (this.isAnimating) return;
+      if (this.grid.bombRow !== null) {
+        this.grid.removeBomb();
+        document.getElementById('graph-bomb-toggle').textContent = '💣 Add Bomb';
+      } else {
+        this.grid.addBomb();
+        document.getElementById('graph-bomb-toggle').textContent = '💣 Remove Bomb';
+      }
+      GridRenderer.draw();
     });
 
     this._setupAlgoCallbacks();

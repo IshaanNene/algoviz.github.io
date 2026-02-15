@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
         'compare': {
             mount: (c) => ComparisonView.mount(c),
             unmount: () => ComparisonView.unmount()
+        },
+        'map': {
+            mount: (c) => MapView.mount(c),
+            unmount: () => MapView.unmount()
         }
     };
 
