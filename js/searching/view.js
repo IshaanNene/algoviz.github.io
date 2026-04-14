@@ -124,7 +124,7 @@ const SearchView = {
             if (this.engine.steps.length === 0) {
                 const arr = [...this.originalArray];
                 // Binary, Jump, Exponential need sorted array
-                if (this.currentAlgo !== 'linear') arr.sort((a, b) => a - b);
+                if (!['linear', 'sentinel-linear', 'front-back'].includes(this.currentAlgo)) arr.sort((a, b) => a - b);
                 const steps = SearchAlgorithms.run(this.currentAlgo, arr, this.target);
                 this.engine.loadSteps(steps);
                 document.getElementById('search-timeline').max = steps.length - 1;
@@ -147,7 +147,7 @@ const SearchView = {
                 this.target = parseInt(ti.value);
                 if (isNaN(this.target)) { this.target = this.originalArray[Math.floor(Math.random() * this.originalArray.length)]; ti.value = this.target; }
                 const arr = [...this.originalArray];
-                if (this.currentAlgo !== 'linear') arr.sort((a, b) => a - b);
+                if (!['linear', 'sentinel-linear', 'front-back'].includes(this.currentAlgo)) arr.sort((a, b) => a - b);
                 const steps = SearchAlgorithms.run(this.currentAlgo, arr, this.target);
                 this.engine.loadSteps(steps);
                 document.getElementById('search-timeline').max = steps.length - 1;

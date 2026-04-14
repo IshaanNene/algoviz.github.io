@@ -11,6 +11,11 @@ const PathAlgorithms = {
         'dfs': { name: 'Depth-first Search', desc: "Depth-first Search is unweighted and does not guarantee the shortest path!" },
         'swarm': { name: 'Swarm Algorithm', desc: "Swarm Algorithm is weighted and does not guarantee the shortest path!" },
         'bidirectional': { name: 'Bidirectional BFS', desc: "Bidirectional BFS searches from both start and target simultaneously!" },
+        'bellman-ford': { name: 'Bellman-Ford', desc: "Relaxes all edges repeatedly. Handles negative weights and guarantees shortest path!" },
+        'ida-star': { name: 'IDA*', desc: "Iterative Deepening A* combines depth-first with A*'s heuristic, using minimal memory!" },
+        'bidirectional-astar': { name: 'Bidirectional A*', desc: "Searches from both start and target using A* heuristic simultaneously!" },
+        'best-first-euclidean': { name: 'Best-First (Euclidean)', desc: "Greedy best-first using Euclidean distance. Creates smoother, circular search patterns!" },
+        'jps': { name: 'Jump Point Search', desc: "Optimizes A* on grids by jumping over empty space, dramatically reducing explored nodes!" },
     },
 
     mazes: {
@@ -19,6 +24,11 @@ const PathAlgorithms = {
         'recursive-horizontal': 'Recursive Division (horizontal skew)',
         'random': 'Basic Random Maze',
         'stair': 'Simple Stair Pattern',
+        'dfs-backtracker': 'DFS Backtracker',
+        'prims': "Randomized Prim's",
+        'kruskals': "Randomized Kruskal's",
+        'ellers': "Eller's Algorithm",
+        'spiral': 'Spiral Pattern',
     },
 
     /* ==================== PATHFINDING ==================== */
@@ -40,6 +50,11 @@ const PathAlgorithms = {
             case 'dfs': return this._dfs(grid);
             case 'swarm': return this._swarm(grid);
             case 'bidirectional': return this._bidirectional(grid);
+            case 'bellman-ford': return this._bellmanFord(grid);
+            case 'ida-star': return this._idaStar(grid);
+            case 'bidirectional-astar': return this._bidirectionalAStar(grid);
+            case 'best-first-euclidean': return this._bestFirstEuclidean(grid);
+            case 'jps': return this._jps(grid);
         }
         return { visited: [], path: [] };
     },
@@ -335,6 +350,11 @@ const PathAlgorithms = {
             case 'recursive-horizontal': return this._recursiveDivision(grid, 'horizontal');
             case 'random': return this._randomMaze(grid);
             case 'stair': return this._stairMaze(grid);
+            case 'dfs-backtracker': return this._dfsMaze(grid);
+            case 'prims': return this._primsMaze(grid);
+            case 'kruskals': return this._kruskalsMaze(grid);
+            case 'ellers': return this._ellersMaze(grid);
+            case 'spiral': return this._spiralMaze(grid);
         }
         return [];
     },
@@ -423,6 +443,139 @@ const PathAlgorithms = {
                 }
             }
             goingDown = !goingDown;
+        }
+        return steps;
+    },
+
+    /* ---- DFS Backtracker Maze ---- */
+    _dfsMaze(grid) {
+        const steps = [], R = grid.rows, C = grid.cols;
+        const sr = grid.startRow, sc = grid.startCol, tr = grid.targetRow, tc = grid.targetCol;
+        const _skip = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
+        const passage = Array.from({ length: R }, () => new Array(C).fill(false));
+        const sr2 = Math.max(1, sr % 2 === 0 ? sr + 1 : sr), sc2 = Math.max(1, sc % 2 === 0 ? sc + 1 : sc);
+        if (sr2 < R && sc2 < C) passage[sr2][sc2] = true;
+        const stack = [[sr2, sc2]];
+        while (stack.length > 0) {
+            const [r, c] = stack[stack.length - 1];
+            const nb = [];
+            for (const [dr, dc] of [[-2,0],[2,0],[0,-2],[0,2]]) {
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 1 && nr < R - 1 && nc >= 1 && nc < C - 1 && !passage[nr][nc]) nb.push([nr, nc, r + dr/2, c + dc/2]);
+            }
+            if (nb.length > 0) {
+                const [nr, nc, wr, wc] = nb[Math.floor(Math.random() * nb.length)];
+                passage[nr][nc] = true; passage[wr][wc] = true; stack.push([nr, nc]);
+            } else stack.pop();
+        }
+        passage[sr][sc] = true; passage[tr][tc] = true;
+        for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (!passage[r][c] && !_skip(r, c)) steps.push({ type: 'wall', r, c });
+        return steps;
+    },
+
+    /* ---- Randomized Prim's Maze ---- */
+    _primsMaze(grid) {
+        const steps = [], R = grid.rows, C = grid.cols;
+        const sr = grid.startRow, sc = grid.startCol, tr = grid.targetRow, tc = grid.targetCol;
+        const _skip = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
+        const passage = Array.from({ length: R }, () => new Array(C).fill(false));
+        const sr2 = Math.max(1, sr % 2 === 0 ? sr + 1 : sr), sc2 = Math.max(1, sc % 2 === 0 ? sc + 1 : sc);
+        passage[sr2][sc2] = true;
+        const frontiers = [];
+        const addFrontiers = (r, c) => {
+            for (const [dr, dc] of [[-2,0],[2,0],[0,-2],[0,2]]) {
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 1 && nr < R - 1 && nc >= 1 && nc < C - 1 && !passage[nr][nc]) frontiers.push([nr, nc, r + dr/2, c + dc/2]);
+            }
+        };
+        addFrontiers(sr2, sc2);
+        while (frontiers.length > 0) {
+            const idx = Math.floor(Math.random() * frontiers.length);
+            const [nr, nc, wr, wc] = frontiers[idx]; frontiers.splice(idx, 1);
+            if (!passage[nr][nc]) { passage[nr][nc] = true; passage[wr][wc] = true; addFrontiers(nr, nc); }
+        }
+        passage[sr][sc] = true; passage[tr][tc] = true;
+        for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (!passage[r][c] && !_skip(r, c)) steps.push({ type: 'wall', r, c });
+        return steps;
+    },
+
+    /* ---- Randomized Kruskal's Maze ---- */
+    _kruskalsMaze(grid) {
+        const steps = [], R = grid.rows, C = grid.cols;
+        const sr = grid.startRow, sc = grid.startCol, tr = grid.targetRow, tc = grid.targetCol;
+        const _skip = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
+        const passage = Array.from({ length: R }, () => new Array(C).fill(false));
+        const parent = {};
+        const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+        const union = (a, b) => { parent[find(a)] = find(b); };
+        for (let r = 1; r < R - 1; r += 2) for (let c = 1; c < C - 1; c += 2) { parent[`${r},${c}`] = `${r},${c}`; passage[r][c] = true; }
+        const walls = [];
+        for (let r = 1; r < R - 1; r += 2) for (let c = 1; c < C - 1; c += 2) {
+            if (r + 2 < R) walls.push([r, c, r + 2, c, r + 1, c]);
+            if (c + 2 < C) walls.push([r, c, r, c + 2, r, c + 1]);
+        }
+        for (let i = walls.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [walls[i], walls[j]] = [walls[j], walls[i]]; }
+        for (const [r1, c1, r2, c2, wr, wc] of walls) {
+            if (find(`${r1},${c1}`) !== find(`${r2},${c2}`)) { union(`${r1},${c1}`, `${r2},${c2}`); passage[wr][wc] = true; }
+        }
+        passage[sr][sc] = true; passage[tr][tc] = true;
+        for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (!passage[r][c] && !_skip(r, c)) steps.push({ type: 'wall', r, c });
+        return steps;
+    },
+
+    /* ---- Eller's Algorithm Maze ---- */
+    _ellersMaze(grid) {
+        const steps = [], R = grid.rows, C = grid.cols;
+        const sr = grid.startRow, sc = grid.startCol, tr = grid.targetRow, tc = grid.targetCol;
+        const _skip = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
+        const passage = Array.from({ length: R }, () => new Array(C).fill(false));
+        const cellCols = []; for (let c = 1; c < C - 1; c += 2) cellCols.push(c);
+        const cc = cellCols.length; if (cc === 0) return steps;
+        let nextSet = 1, rowSets = new Array(cc).fill(0).map(() => nextSet++);
+        for (let ri = 0; ri < Math.floor(R / 2); ri++) {
+            const r = ri * 2 + 1; if (r >= R) break;
+            for (let ci = 0; ci < cc; ci++) passage[r][cellCols[ci]] = true;
+            const isLast = r + 2 >= R;
+            for (let ci = 0; ci < cc - 1; ci++) {
+                if (rowSets[ci] !== rowSets[ci + 1] && (isLast || Math.random() < 0.5)) {
+                    passage[r][cellCols[ci] + 1] = true;
+                    const old = rowSets[ci + 1], nw = rowSets[ci];
+                    for (let k = 0; k < cc; k++) if (rowSets[k] === old) rowSets[k] = nw;
+                }
+            }
+            if (!isLast) {
+                const setMembers = {};
+                for (let ci = 0; ci < cc; ci++) { if (!setMembers[rowSets[ci]]) setMembers[rowSets[ci]] = []; setMembers[rowSets[ci]].push(ci); }
+                const newSets = new Array(cc).fill(0).map(() => nextSet++);
+                for (const s in setMembers) {
+                    const members = setMembers[s].sort(() => Math.random() - 0.5);
+                    const numDown = Math.max(1, Math.floor(Math.random() * members.length) + 1);
+                    for (let i = 0; i < Math.min(numDown, members.length); i++) {
+                        const ci = members[i], c = cellCols[ci];
+                        passage[r + 1][c] = true; newSets[ci] = parseInt(s);
+                    }
+                }
+                rowSets = newSets;
+            }
+        }
+        passage[sr][sc] = true; passage[tr][tc] = true;
+        for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (!passage[r][c] && !_skip(r, c)) steps.push({ type: 'wall', r, c });
+        return steps;
+    },
+
+    /* ---- Spiral Pattern ---- */
+    _spiralMaze(grid) {
+        const steps = [], R = grid.rows, C = grid.cols;
+        const sr = grid.startRow, sc = grid.startCol, tr = grid.targetRow, tc = grid.targetCol;
+        const _skip = (r, c) => (r === sr && c === sc) || (r === tr && c === tc);
+        let top = 0, bottom = R - 1, left = 0, right = C - 1, layer = 0;
+        while (top < bottom && left < right) {
+            const gap = 2 + layer * 2;
+            for (let c = left; c <= right; c++) if (c % gap !== 0 && !_skip(top, c)) steps.push({ type: 'wall', r: top, c });
+            for (let r = top + 1; r <= bottom; r++) if (r % gap !== 0 && !_skip(r, right)) steps.push({ type: 'wall', r, c: right });
+            for (let c = right - 1; c >= left; c--) if (c % gap !== 1 && !_skip(bottom, c)) steps.push({ type: 'wall', r: bottom, c });
+            for (let r = bottom - 1; r > top; r--) if (r % gap !== 1 && !_skip(r, left)) steps.push({ type: 'wall', r, c: left });
+            top += 2; bottom -= 2; left += 2; right -= 2; layer++;
         }
         return steps;
     }

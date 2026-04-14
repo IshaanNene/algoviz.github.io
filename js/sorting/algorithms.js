@@ -17,6 +17,16 @@ const SortingAlgorithms = {
         'cocktail': { name: 'Cocktail Shaker Sort', time: 'O(n²)', space: 'O(1)', desc: 'Bidirectional bubble sort that traverses the array in both directions alternately.' },
         'gnome': { name: 'Gnome Sort', time: 'O(n²)', space: 'O(1)', desc: 'Similar to insertion sort but moves elements by a series of swaps, like a garden gnome sorting flower pots.' },
         'bitonic': { name: 'Bitonic Sort', time: 'O(n log²n)', space: 'O(1)', desc: 'Parallel-friendly comparison sort that builds bitonic sequences and merges them.' },
+        'counting': { name: 'Counting Sort', time: 'O(n+k)', space: 'O(k)', desc: 'Counts occurrences of each value then reconstructs the sorted array. Non-comparison based.' },
+        'bucket': { name: 'Bucket Sort', time: 'O(n+k)', space: 'O(n)', desc: 'Distributes elements into buckets, sorts each bucket individually, then concatenates.' },
+        'comb': { name: 'Comb Sort', time: 'O(n²/2^p)', space: 'O(1)', desc: 'Improves Bubble Sort by comparing elements far apart, shrinking the gap by factor 1.3.' },
+        'cycle': { name: 'Cycle Sort', time: 'O(n²)', space: 'O(1)', desc: 'Minimizes memory writes by rotating elements to their correct positions in cycles.' },
+        'pancake': { name: 'Pancake Sort', time: 'O(n²)', space: 'O(1)', desc: 'Sorts using only prefix reversals (flips), like flipping a stack of pancakes.' },
+        'tim': { name: 'Tim Sort', time: 'O(n log n)', space: 'O(n)', desc: 'Hybrid sort used in Python & Java. Detects natural runs and merges with galloping.' },
+        'odd-even': { name: 'Odd-Even Sort', time: 'O(n²)', space: 'O(1)', desc: 'Compares all odd/even indexed pairs, then even/odd pairs, repeating until sorted.' },
+        'pigeonhole': { name: 'Pigeonhole Sort', time: 'O(n+k)', space: 'O(k)', desc: 'Places each element into a pigeonhole matching its key, then collects them in order.' },
+        'bogo': { name: 'Bogo Sort', time: 'O((n+1)!)', space: 'O(1)', desc: 'Randomly shuffles the array until sorted. Hilariously inefficient — for entertainment only!' },
+        'strand': { name: 'Strand Sort', time: 'O(n²)', space: 'O(n)', desc: 'Repeatedly pulls sorted subsequences (strands) from the input and merges them together.' },
     },
 
     run(name, arr) {
@@ -37,6 +47,16 @@ const SortingAlgorithms = {
             case 'bitonic': this._bitonicSort(a, steps); break;
             case 'intro': this._introSort(a, steps); break;
             case 'adaptive-merge': this._adaptiveMergeSort(a, steps); break;
+            case 'counting': this._countingSort(a, steps); break;
+            case 'bucket': this._bucketSort(a, steps); break;
+            case 'comb': this._combSort(a, steps); break;
+            case 'cycle': this._cycleSort(a, steps); break;
+            case 'pancake': this._pancakeSort(a, steps); break;
+            case 'tim': this._timSort(a, steps); break;
+            case 'odd-even': this._oddEvenSort(a, steps); break;
+            case 'pigeonhole': this._pigeonholeSort(a, steps); break;
+            case 'bogo': this._bogoSort(a, steps); break;
+            case 'strand': this._strandSort(a, steps); break;
         }
         for (let i = 0; i < a.length; i++) steps.push({ type: 'sorted', indices: [i], array: [...a] });
         return steps;
@@ -430,6 +450,174 @@ const SortingAlgorithms = {
             }
             runs.length = 0;
             runs.push(...newRuns);
+        }
+    },
+
+    /* ---- Counting Sort ---- */
+    _countingSort(a, s) {
+        const n = a.length, max = Math.max(...a);
+        const count = new Array(max + 1).fill(0);
+        for (let i = 0; i < n; i++) { count[a[i]]++; s.push({ type: 'bucket', indices: [i], array: [...a] }); }
+        for (let i = 1; i <= max; i++) count[i] += count[i - 1];
+        const out = new Array(n);
+        for (let i = n - 1; i >= 0; i--) { out[count[a[i]] - 1] = a[i]; count[a[i]]--; }
+        for (let i = 0; i < n; i++) { a[i] = out[i]; s.push({ type: 'overwrite', indices: [i], array: [...a] }); }
+    },
+
+    /* ---- Bucket Sort ---- */
+    _bucketSort(a, s) {
+        const n = a.length, max = Math.max(...a), min = Math.min(...a);
+        const bc = Math.max(1, Math.floor(Math.sqrt(n))), range = max - min + 1;
+        const buckets = Array.from({ length: bc }, () => []);
+        for (let i = 0; i < n; i++) {
+            const bi = Math.min(bc - 1, Math.floor((a[i] - min) * bc / range));
+            buckets[bi].push(a[i]);
+            s.push({ type: 'bucket', indices: [i], array: [...a] });
+        }
+        for (const b of buckets) b.sort((x, y) => x - y);
+        let idx = 0;
+        for (const b of buckets) for (const v of b) { a[idx] = v; s.push({ type: 'overwrite', indices: [idx], array: [...a] }); idx++; }
+    },
+
+    /* ---- Comb Sort ---- */
+    _combSort(a, s) {
+        const n = a.length;
+        let gap = n, swapped = true;
+        while (gap > 1 || swapped) {
+            gap = Math.max(1, Math.floor(gap / 1.3));
+            swapped = false;
+            for (let i = 0; i + gap < n; i++) {
+                s.push({ type: 'compare', indices: [i, i + gap], array: [...a] });
+                if (a[i] > a[i + gap]) { [a[i], a[i + gap]] = [a[i + gap], a[i]]; s.push({ type: 'swap', indices: [i, i + gap], array: [...a] }); swapped = true; }
+            }
+        }
+    },
+
+    /* ---- Cycle Sort ---- */
+    _cycleSort(a, s) {
+        const n = a.length;
+        for (let start = 0; start < n - 1; start++) {
+            let item = a[start], pos = start;
+            for (let i = start + 1; i < n; i++) { s.push({ type: 'compare', indices: [start, i], array: [...a] }); if (a[i] < item) pos++; }
+            if (pos === start) continue;
+            while (item === a[pos]) pos++;
+            if (pos !== start) { let t = a[pos]; a[pos] = item; item = t; s.push({ type: 'overwrite', indices: [pos], array: [...a] }); }
+            while (pos !== start) {
+                pos = start;
+                for (let i = start + 1; i < n; i++) { s.push({ type: 'compare', indices: [start, i], array: [...a] }); if (a[i] < item) pos++; }
+                while (item === a[pos]) pos++;
+                if (item !== a[pos]) { let t = a[pos]; a[pos] = item; item = t; s.push({ type: 'overwrite', indices: [pos], array: [...a] }); }
+            }
+        }
+    },
+
+    /* ---- Pancake Sort ---- */
+    _pancakeSort(a, s) {
+        const flip = (end) => { let lo = 0, hi = end; while (lo < hi) { [a[lo], a[hi]] = [a[hi], a[lo]]; s.push({ type: 'swap', indices: [lo, hi], array: [...a] }); lo++; hi--; } };
+        for (let size = a.length; size > 1; size--) {
+            let mx = 0;
+            for (let i = 1; i < size; i++) { s.push({ type: 'compare', indices: [i, mx], array: [...a] }); if (a[i] > a[mx]) mx = i; }
+            if (mx !== size - 1) { if (mx > 0) flip(mx); flip(size - 1); }
+            s.push({ type: 'sorted', indices: [size - 1], array: [...a] });
+        }
+    },
+
+    /* ---- Tim Sort ---- */
+    _timSort(a, s) {
+        const n = a.length, MR = 32;
+        let r = 0, tmp = n;
+        while (tmp >= MR) { r |= tmp & 1; tmp >>= 1; }
+        const minRun = tmp + r;
+        const runs = [];
+        let i = 0;
+        while (i < n) {
+            let end = i + 1;
+            if (end < n) {
+                if (a[end] < a[i]) {
+                    while (end < n && a[end] < a[end - 1]) { s.push({ type: 'compare', indices: [end - 1, end], array: [...a] }); end++; }
+                    let lo = i, hi = end - 1;
+                    while (lo < hi) { [a[lo], a[hi]] = [a[hi], a[lo]]; s.push({ type: 'swap', indices: [lo, hi], array: [...a] }); lo++; hi--; }
+                } else {
+                    while (end < n && a[end] >= a[end - 1]) { s.push({ type: 'compare', indices: [end - 1, end], array: [...a] }); end++; }
+                }
+            }
+            const ext = Math.min(i + minRun, n);
+            if (end < ext) { this._insertionSortRange(a, s, i, ext - 1); end = ext; }
+            runs.push({ start: i, end: end - 1 }); i = end;
+        }
+        while (runs.length > 1) {
+            const nr = [];
+            for (let j = 0; j < runs.length; j += 2) {
+                if (j + 1 < runs.length) {
+                    s.push({ type: 'merge-split', indices: [runs[j].start, runs[j].end, runs[j + 1].end], array: [...a] });
+                    this._merge(a, s, runs[j].start, runs[j].end, runs[j + 1].end);
+                    nr.push({ start: runs[j].start, end: runs[j + 1].end });
+                } else nr.push(runs[j]);
+            }
+            runs.length = 0; runs.push(...nr);
+        }
+    },
+
+    /* ---- Odd-Even Sort ---- */
+    _oddEvenSort(a, s) {
+        const n = a.length;
+        let sorted = false;
+        while (!sorted) {
+            sorted = true;
+            for (let i = 1; i < n - 1; i += 2) {
+                s.push({ type: 'compare', indices: [i, i + 1], array: [...a] });
+                if (a[i] > a[i + 1]) { [a[i], a[i + 1]] = [a[i + 1], a[i]]; s.push({ type: 'swap', indices: [i, i + 1], array: [...a] }); sorted = false; }
+            }
+            for (let i = 0; i < n - 1; i += 2) {
+                s.push({ type: 'compare', indices: [i, i + 1], array: [...a] });
+                if (a[i] > a[i + 1]) { [a[i], a[i + 1]] = [a[i + 1], a[i]]; s.push({ type: 'swap', indices: [i, i + 1], array: [...a] }); sorted = false; }
+            }
+        }
+    },
+
+    /* ---- Pigeonhole Sort ---- */
+    _pigeonholeSort(a, s) {
+        const min = Math.min(...a), max = Math.max(...a), range = max - min + 1;
+        const holes = new Array(range).fill(0);
+        for (let i = 0; i < a.length; i++) { holes[a[i] - min]++; s.push({ type: 'bucket', indices: [i], array: [...a] }); }
+        let idx = 0;
+        for (let i = 0; i < range; i++) while (holes[i]-- > 0) { a[idx] = i + min; s.push({ type: 'overwrite', indices: [idx], array: [...a] }); idx++; }
+    },
+
+    /* ---- Bogo Sort (capped at 15000 steps) ---- */
+    _bogoSort(a, s) {
+        const isSorted = () => { for (let i = 1; i < a.length; i++) if (a[i] < a[i - 1]) return false; return true; };
+        const maxSteps = 15000;
+        while (!isSorted() && s.length < maxSteps) {
+            for (let i = 1; i < a.length; i++) s.push({ type: 'compare', indices: [i - 1, i], array: [...a] });
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+                s.push({ type: 'swap', indices: [i, j], array: [...a] });
+            }
+        }
+    },
+
+    /* ---- Strand Sort ---- */
+    _strandSort(a, s) {
+        const n = a.length, input = [...a];
+        let result = [];
+        while (input.length > 0) {
+            const strand = [input.shift()];
+            let i = 0;
+            while (i < input.length) {
+                if (input[i] >= strand[strand.length - 1]) strand.push(input.splice(i, 1)[0]);
+                else i++;
+            }
+            const merged = [];
+            let si = 0, ri = 0;
+            while (si < strand.length && ri < result.length) merged.push(strand[si] <= result[ri] ? strand[si++] : result[ri++]);
+            while (si < strand.length) merged.push(strand[si++]);
+            while (ri < result.length) merged.push(result[ri++]);
+            result = merged;
+            for (let k = 0; k < result.length; k++) a[k] = result[k];
+            for (let k = 0; k < input.length; k++) a[result.length + k] = input[k];
+            for (let k = 0; k < result.length; k++) s.push({ type: 'overwrite', indices: [k], array: [...a] });
         }
     }
 };

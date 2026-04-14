@@ -534,20 +534,34 @@ body {
   border-bottom: var(--border-width) solid var(--border);
   background: var(--bg-card);
   overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tab-bar::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.tab-bar::-webkit-scrollbar-thumb {
+  background: var(--border);
 }
 
 .tab-item {
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: var(--space-md) var(--space-lg);
+  letter-spacing: 0.5px;
+  padding: var(--space-sm) var(--space-md);
   border: none;
   border-right: 2px solid var(--border);
   background: transparent;
   cursor: pointer;
   white-space: nowrap;
+  transition: background var(--transition-fast);
 }
 
 .tab-item:hover {

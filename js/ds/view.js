@@ -21,6 +21,16 @@ const DSView = {
           <button class="tab-item" data-ds="hash-table">Hash Table</button>
           <button class="tab-item" data-ds="trie">Trie</button>
           <button class="tab-item" data-ds="strings">Strings</button>
+          <button class="tab-item" data-ds="avl-tree">AVL Tree</button>
+          <button class="tab-item" data-ds="rb-tree">RB Tree</button>
+          <button class="tab-item" data-ds="union-find">Union-Find</button>
+          <button class="tab-item" data-ds="segment-tree">Seg Tree</button>
+          <button class="tab-item" data-ds="bloom-filter">Bloom Filter</button>
+          <button class="tab-item" data-ds="skip-list">Skip List</button>
+          <button class="tab-item" data-ds="b-tree">B-Tree</button>
+          <button class="tab-item" data-ds="graph-ds">Graph</button>
+          <button class="tab-item" data-ds="doubly-ll">Doubly LL</button>
+          <button class="tab-item" data-ds="deque">Deque</button>
         </div>
         <div class="operation-panel" id="ds-operations"></div>
         <div class="controls-bar">
@@ -141,6 +151,105 @@ const DSView = {
           <button class="brutal-btn primary small" data-op="string-run">Run</button>
           <button class="brutal-btn small" data-op="clear">Clear</button>`;
                 break;
+            case 'avl-tree':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Value" value="42"></div>
+          <button class="brutal-btn primary small" data-op="insert">Insert</button>
+          <button class="brutal-btn danger small" data-op="delete">Delete</button>
+          <button class="brutal-btn purple small" data-op="search">Search</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'rb-tree':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Value" value="42"></div>
+          <button class="brutal-btn primary small" data-op="insert">Insert</button>
+          <button class="brutal-btn purple small" data-op="search">Search</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'union-find':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Element" value="0"></div>
+          <div class="op-input-group"><input type="number" id="ds-value2" class="brutal-input" placeholder="Element 2" value="1" style="width:80px"></div>
+          <button class="brutal-btn primary small" data-op="make-set">Make Set</button>
+          <button class="brutal-btn accent small" data-op="find">Find</button>
+          <button class="brutal-btn purple small" data-op="union">Union</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'segment-tree':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="text" id="ds-arr" class="brutal-input" placeholder="Array (comma-sep)" value="1,3,5,7,9,11" style="width:180px"></div>
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Index" value="0" style="width:60px"></div>
+          <div class="op-input-group"><input type="number" id="ds-value2" class="brutal-input" placeholder="Val/R" value="5" style="width:60px"></div>
+          <button class="brutal-btn primary small" data-op="st-build">Build</button>
+          <button class="brutal-btn accent small" data-op="st-update">Update</button>
+          <button class="brutal-btn purple small" data-op="st-query">Query(L,R)</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'bloom-filter':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="text" id="ds-word" class="brutal-input" placeholder="Key" value="hello" style="width:120px"></div>
+          <button class="brutal-btn primary small" data-op="bf-insert">Insert</button>
+          <button class="brutal-btn purple small" data-op="bf-check">Check</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'skip-list':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Value" value="15"></div>
+          <button class="brutal-btn primary small" data-op="insert">Insert</button>
+          <button class="brutal-btn danger small" data-op="delete">Delete</button>
+          <button class="brutal-btn purple small" data-op="search">Search</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'b-tree':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Value" value="15"></div>
+          <button class="brutal-btn primary small" data-op="insert">Insert</button>
+          <button class="brutal-btn purple small" data-op="search">Search</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'graph-ds':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="text" id="ds-label" class="brutal-input" placeholder="Node" value="A" style="width:60px"></div>
+          <div class="op-input-group"><input type="text" id="ds-label2" class="brutal-input" placeholder="To" value="B" style="width:60px"></div>
+          <button class="brutal-btn primary small" data-op="g-add-node">Add Node</button>
+          <button class="brutal-btn accent small" data-op="g-add-edge">Add Edge</button>
+          <button class="brutal-btn danger small" data-op="g-remove">Remove Node</button>
+          <button class="brutal-btn purple small" data-op="g-bfs">BFS</button>
+          <button class="brutal-btn purple small" data-op="g-dfs">DFS</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'doubly-ll':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Value" value="42"></div>
+          <button class="brutal-btn primary small" data-op="insert-head">Insert Head</button>
+          <button class="brutal-btn primary small" data-op="insert-tail">Insert Tail</button>
+          <button class="brutal-btn danger small" data-op="delete-head">Del Head</button>
+          <button class="brutal-btn danger small" data-op="delete-tail">Del Tail</button>
+          <button class="brutal-btn purple small" data-op="search">Search</button>
+          <button class="brutal-btn green small" data-op="reverse">Reverse</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
+            case 'deque':
+                panel.innerHTML = `
+          <div class="op-input-group"><input type="number" id="ds-value" class="brutal-input" placeholder="Value" value="42"></div>
+          <button class="brutal-btn primary small" data-op="push-front">Push Front</button>
+          <button class="brutal-btn primary small" data-op="push-back">Push Back</button>
+          <button class="brutal-btn danger small" data-op="pop-front">Pop Front</button>
+          <button class="brutal-btn danger small" data-op="pop-back">Pop Back</button>
+          <button class="brutal-btn accent small" data-op="peek-front">Peek Front</button>
+          <button class="brutal-btn accent small" data-op="peek-back">Peek Back</button>
+          <button class="brutal-btn green small" data-op="sample">Sample</button>
+          <button class="brutal-btn small" data-op="clear">Clear</button>`;
+                break;
         }
     },
 
@@ -155,6 +264,16 @@ const DSView = {
             case 'hash-table': HashTableViz.init(canvas); break;
             case 'trie': TrieViz.init(canvas); break;
             case 'strings': StringViz.init(canvas); break;
+            case 'avl-tree': AVLTreeViz.init(canvas); break;
+            case 'rb-tree': RBTreeViz.init(canvas); break;
+            case 'union-find': UnionFindViz.init(canvas); break;
+            case 'segment-tree': SegmentTreeViz.init(canvas); break;
+            case 'bloom-filter': BloomFilterViz.init(canvas); break;
+            case 'skip-list': SkipListViz.init(canvas); break;
+            case 'b-tree': BTreeViz.init(canvas); break;
+            case 'graph-ds': GraphViz.init(canvas); break;
+            case 'doubly-ll': DoublyLinkedListViz.init(canvas); break;
+            case 'deque': DequeViz.init(canvas); break;
         }
     },
 
@@ -167,6 +286,16 @@ const DSView = {
             case 'hash-table': return HashTableViz;
             case 'trie': return TrieViz;
             case 'strings': return StringViz;
+            case 'avl-tree': return AVLTreeViz;
+            case 'rb-tree': return RBTreeViz;
+            case 'union-find': return UnionFindViz;
+            case 'segment-tree': return SegmentTreeViz;
+            case 'bloom-filter': return BloomFilterViz;
+            case 'skip-list': return SkipListViz;
+            case 'b-tree': return BTreeViz;
+            case 'graph-ds': return GraphViz;
+            case 'doubly-ll': return DoublyLinkedListViz;
+            case 'deque': return DequeViz;
         }
     },
 
@@ -261,6 +390,106 @@ const DSView = {
                     case 'clear': StringViz.clear(); return;
                 } break;
             }
+            case 'avl-tree':
+                switch (op) {
+                    case 'insert': steps = AVLTreeViz.insert(value); break;
+                    case 'delete': steps = AVLTreeViz.delete(value); break;
+                    case 'search': steps = AVLTreeViz.search(value); break;
+                    case 'sample': AVLTreeViz.buildSample(); return;
+                    case 'clear': AVLTreeViz.clear(); return;
+                } break;
+            case 'rb-tree':
+                switch (op) {
+                    case 'insert': steps = RBTreeViz.insert(value); break;
+                    case 'search': steps = RBTreeViz.search(value); break;
+                    case 'sample': RBTreeViz.buildSample(); return;
+                    case 'clear': RBTreeViz.clear(); return;
+                } break;
+            case 'union-find': {
+                const v2i = document.getElementById('ds-value2');
+                const val2 = v2i ? parseInt(v2i.value) || 0 : 0;
+                switch (op) {
+                    case 'make-set': steps = UnionFindViz.makeSet(value); break;
+                    case 'find': steps = UnionFindViz.find(value); break;
+                    case 'union': steps = UnionFindViz.union(value, val2); break;
+                    case 'sample': UnionFindViz.buildSample(); return;
+                    case 'clear': UnionFindViz.clear(); return;
+                } break;
+            }
+            case 'segment-tree': {
+                const arrI = document.getElementById('ds-arr');
+                const v2i2 = document.getElementById('ds-value2');
+                const val2 = v2i2 ? parseInt(v2i2.value) || 0 : 0;
+                switch (op) {
+                    case 'st-build': { const arr = (arrI ? arrI.value : '1,3,5,7').split(',').map(Number).filter(n => !isNaN(n)); steps = SegmentTreeViz.build(arr); break; }
+                    case 'st-update': steps = SegmentTreeViz.update(value, val2); break;
+                    case 'st-query': steps = SegmentTreeViz.query(value, val2); break;
+                    case 'sample': SegmentTreeViz.buildSample(); return;
+                    case 'clear': SegmentTreeViz.clear(); return;
+                } break;
+            }
+            case 'bloom-filter': {
+                const wi = document.getElementById('ds-word');
+                const word = wi ? wi.value || '' : '';
+                switch (op) {
+                    case 'bf-insert': steps = BloomFilterViz.insert(word); break;
+                    case 'bf-check': steps = BloomFilterViz.check(word); break;
+                    case 'sample': BloomFilterViz.buildSample(); return;
+                    case 'clear': BloomFilterViz.clear(); return;
+                } break;
+            }
+            case 'skip-list':
+                switch (op) {
+                    case 'insert': steps = SkipListViz.insert(value); break;
+                    case 'delete': steps = SkipListViz.deleteVal(value); break;
+                    case 'search': steps = SkipListViz.search(value); break;
+                    case 'sample': SkipListViz.buildSample(); return;
+                    case 'clear': SkipListViz.clear(); return;
+                } break;
+            case 'b-tree':
+                switch (op) {
+                    case 'insert': steps = BTreeViz.insert(value); break;
+                    case 'search': steps = BTreeViz.search(value); break;
+                    case 'sample': BTreeViz.buildSample(); return;
+                    case 'clear': BTreeViz.clear(); return;
+                } break;
+            case 'graph-ds': {
+                const li = document.getElementById('ds-label');
+                const l2i = document.getElementById('ds-label2');
+                const label = li ? li.value || '' : '';
+                const label2 = l2i ? l2i.value || '' : '';
+                switch (op) {
+                    case 'g-add-node': steps = GraphViz.addNode(label); break;
+                    case 'g-add-edge': steps = GraphViz.addEdge(label, label2); break;
+                    case 'g-remove': steps = GraphViz.removeNode(label); break;
+                    case 'g-bfs': steps = GraphViz.bfs(label); break;
+                    case 'g-dfs': steps = GraphViz.dfs(label); break;
+                    case 'sample': GraphViz.buildSample(); return;
+                    case 'clear': GraphViz.clear(); return;
+                } break;
+            }
+            case 'doubly-ll':
+                switch (op) {
+                    case 'insert-head': steps = DoublyLinkedListViz.insertHead(value); break;
+                    case 'insert-tail': steps = DoublyLinkedListViz.insertTail(value); break;
+                    case 'delete-head': steps = DoublyLinkedListViz.deleteHead(); break;
+                    case 'delete-tail': steps = DoublyLinkedListViz.deleteTail(); break;
+                    case 'search': steps = DoublyLinkedListViz.search(value); break;
+                    case 'reverse': steps = DoublyLinkedListViz.reverse(); break;
+                    case 'sample': DoublyLinkedListViz.buildSample(); return;
+                    case 'clear': DoublyLinkedListViz.clear(); return;
+                } break;
+            case 'deque':
+                switch (op) {
+                    case 'push-front': steps = DequeViz.pushFront(value); break;
+                    case 'push-back': steps = DequeViz.pushBack(value); break;
+                    case 'pop-front': steps = DequeViz.popFront(); break;
+                    case 'pop-back': steps = DequeViz.popBack(); break;
+                    case 'peek-front': steps = DequeViz.peekFront(); break;
+                    case 'peek-back': steps = DequeViz.peekBack(); break;
+                    case 'sample': DequeViz.buildSample(); return;
+                    case 'clear': DequeViz.clear(); return;
+                } break;
         }
         if (steps.length > 0) {
             this.engine.loadSteps(steps); document.getElementById('ds-timeline').max = steps.length - 1; document.getElementById('ds-timeline').value = 0;
